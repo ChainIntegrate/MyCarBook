@@ -357,6 +357,8 @@
   <section id="view-detail" hidden>
     <button class="back-link" data-nav="list" data-i18n="backToVehicles">‹ My vehicles</button>
 
+    <img id="detail-photo" src="" alt="" hidden style="width:100%;max-width:320px;aspect-ratio:1;object-fit:cover;border-radius:12px;display:block;margin:0 auto 1rem;border:1px solid var(--line);" />
+
     <h2 id="detail-name" style="margin-bottom:0.75rem;"></h2>
 
     <div class="odometer">
@@ -750,6 +752,7 @@ async function loadVehicles(){
         tokenId,
         name: meta.name || t("unnamedVehicle"),
         attributes: meta.attributes || [],
+        icon: meta.icon || null,
         km: info.km,
         regDate: info.registrationDate,
         purchaseDate: info.purchaseDate,
@@ -813,8 +816,11 @@ function renderVehicleList(){
   for(const v of state.vehicles){
     const card = document.createElement("div");
     card.className = "vehicle-card";
+    const thumbContent = v.icon
+      ? `<img src="${resolveIpfsUrl(v.icon)}" alt="" onerror="this.onerror=null; this.src='${resolveIpfsUrl(v.icon, true)}';" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />`
+      : "🚗";
     card.innerHTML = `
-      <div class="vehicle-thumb">🚗</div>
+      <div class="vehicle-thumb">${thumbContent}</div>
       <div class="vehicle-card-body">
         <div class="vehicle-card-name">${escapeHtml(v.name)}</div>
         <div class="vehicle-card-meta">${Number(v.km).toLocaleString(localeCode())} km</div>
@@ -829,6 +835,17 @@ function escapeHtml(str){
   const div = document.createElement("div");
   div.textContent = str || "";
   return div.innerHTML;
+}
+
+// Per le immagini basta puntare direttamente al gateway (niente fetch/parse
+// come per il JSON) — l'attributo onerror nell'<img> gestisce il fallback
+// al gateway pubblico se quello dedicato non risponde.
+function resolveIpfsUrl(ipfsUrl, usePublicGateway=false){
+  if(!ipfsUrl) return null;
+  const cidPath = ipfsUrl.replace("ipfs://", "");
+  return usePublicGateway
+    ? `https://api.universalprofile.cloud/ipfs/${cidPath}`
+    : `https://peach-familiar-wombat-848.mypinata.cloud/ipfs/${cidPath}`;
 }
 
 $("btn-new-vehicle").addEventListener("click", () => navigate("mint"));
@@ -1002,6 +1019,16 @@ async function openVehicleDetail(tokenId){
 
   $("detail-name").textContent = v.name;
   $("detail-km").textContent = Number(v.km).toLocaleString(localeCode());
+
+  const photoEl = $("detail-photo");
+  if(v.icon){
+    photoEl.src = resolveIpfsUrl(v.icon);
+    photoEl.onerror = () => { photoEl.onerror = null; photoEl.src = resolveIpfsUrl(v.icon, true); };
+    photoEl.hidden = false;
+  }else{
+    photoEl.hidden = true;
+    photoEl.src = "";
+  }
 
   const attrsEl = $("detail-attrs");
   attrsEl.innerHTML = "";
