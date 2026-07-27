@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>MyCarBook — Libretto veicolo on-chain</title>
-<meta name="description" content="Storico manutenzioni della tua auto, on-chain, sulla tua Universal Profile." />
+<title>MyCarBook — On-chain vehicle logbook</title>
+<meta name="description" content="Your vehicle's maintenance history, on-chain, on your Universal Profile." />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -47,7 +47,6 @@
     padding-bottom:3rem;
   }
   body::before{
-    /* leggerissima texture a righe, come la trama di una pagina di libretto */
     content:"";
     position:fixed; inset:0;
     background-image:repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
@@ -70,9 +69,12 @@
     background:rgba(16,24,26,0.92);
     backdrop-filter:blur(6px);
     border-bottom:1px solid var(--line);
+    gap:0.6rem;
   }
   .wordmark{ font-size:1.15rem; color:var(--ink); }
   .wordmark span{ color:var(--brass); }
+
+  .header-actions{ display:flex; align-items:center; gap:0.5rem; }
 
   .wallet-chip{
     font-family:var(--mono);
@@ -85,6 +87,20 @@
     cursor:pointer;
   }
   .wallet-chip.connected{ color:var(--motor-green); border-color:var(--motor-green); }
+
+  .lang-toggle{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.05em;
+    color:var(--ink-muted);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:0.4rem 0.65rem;
+    cursor:pointer;
+  }
+  .lang-toggle:hover{ border-color:var(--brass-dim); color:var(--ink); }
 
   main{ max-width:560px; margin:0 auto; padding:1.25rem; }
 
@@ -103,7 +119,6 @@
   .btn-ghost{ background:transparent; color:var(--ink-muted); border:1px solid var(--line); }
   .btn-danger-outline{ background:transparent; color:var(--danger); border:1px solid var(--danger); }
 
-  /* ---------- Vista lista ---------- */
   .empty-state{
     text-align:center;
     padding:3rem 1rem;
@@ -134,7 +149,6 @@
 
   .fab-row{ margin-top:1.5rem; }
 
-  /* ---------- Form ---------- */
   .field{ margin-bottom:1rem; }
   .field label{
     display:block; font-size:0.75rem; text-transform:uppercase;
@@ -164,7 +178,6 @@
     margin-bottom:1rem; padding:0;
   }
 
-  /* ---------- Riepilogo pre-firma ---------- */
   .confirm-box{
     background:var(--surface-raised);
     border:1px dashed var(--brass-dim);
@@ -181,7 +194,6 @@
   .confirm-row:last-child{ border-bottom:none; }
   .confirm-row .k{ color:var(--ink-muted); }
 
-  /* ---------- Vista dettaglio veicolo ---------- */
   .odometer{
     background:var(--surface);
     border:1px solid var(--line);
@@ -208,7 +220,6 @@
     border-radius:999px; padding:0.25rem 0.65rem;
   }
 
-  /* ---------- Timeline / timbri ---------- */
   .timeline{ position:relative; padding-left:1.6rem; margin-top:1.5rem; }
   .timeline::before{
     content:""; position:absolute; left:0.55rem; top:0.3rem; bottom:0.3rem;
@@ -257,134 +268,133 @@
 
 <header>
   <div class="wordmark">My<span>Car</span>Book</div>
-  <button class="wallet-chip" id="btn-connect">Connetti UP</button>
+  <div class="header-actions">
+    <button class="lang-toggle" id="btn-lang">IT</button>
+    <button class="wallet-chip" id="btn-connect" data-i18n="walletConnect">Connect UP</button>
+  </div>
 </header>
 
 <main>
 
-  <!-- ===== VISTA: lista veicoli ===== -->
   <section id="view-list">
     <div id="list-empty" class="empty-state" hidden>
-      <h2>Nessun veicolo</h2>
-      <p>Registra la tua prima auto: da qui in poi ogni intervento resta scritto, sulla tua Universal Profile.</p>
+      <h2 data-i18n="emptyVehiclesTitle">No vehicles yet</h2>
+      <p data-i18n="emptyVehiclesDesc">Register your first car: from here on, every service stays written, on your Universal Profile.</p>
     </div>
 
     <div id="list-not-connected" class="empty-state">
-      <h2>Connetti la tua Universal Profile</h2>
-      <p>I tuoi veicoli e il relativo storico sono visibili solo a te, collegando la tua UP.</p>
+      <h2 data-i18n="notConnectedTitle">Connect your Universal Profile</h2>
+      <p data-i18n="notConnectedDesc">Your vehicles and their history are visible only to you, once you connect your UP.</p>
     </div>
 
     <div id="vehicle-list"></div>
 
     <div class="fab-row">
-      <button class="btn btn-primary" id="btn-new-vehicle" hidden>+ Aggiungi veicolo</button>
+      <button class="btn btn-primary" id="btn-new-vehicle" data-i18n="addVehicleBtn" hidden>+ Add vehicle</button>
     </div>
   </section>
 
-  <!-- ===== VISTA: mint veicolo ===== -->
   <section id="view-mint" hidden>
-    <button class="back-link" data-nav="list">‹ Indietro</button>
-    <h2 style="margin-bottom:1rem;">Nuovo veicolo</h2>
+    <button class="back-link" data-nav="list" data-i18n="backBtn">‹ Back</button>
+    <h2 style="margin-bottom:1rem;" data-i18n="mintTitle">New vehicle</h2>
 
     <div class="field">
-      <label for="f-name">Nome del veicolo</label>
-      <input type="text" id="f-name" placeholder="Es. La mia Panda" maxlength="100" />
+      <label for="f-name" data-i18n="labelName">Vehicle name</label>
+      <input type="text" id="f-name" data-i18n-ph="placeholderName" placeholder="E.g. My Panda" maxlength="100" />
     </div>
 
     <div class="field-row">
       <div class="field">
-        <label for="f-brand">Marca</label>
+        <label for="f-brand" data-i18n="labelBrand">Brand</label>
         <input type="text" id="f-brand" placeholder="Fiat" />
       </div>
       <div class="field">
-        <label for="f-model">Modello</label>
+        <label for="f-model" data-i18n="labelModel">Model</label>
         <input type="text" id="f-model" placeholder="Panda" />
       </div>
     </div>
     <div class="field-row">
       <div class="field">
-        <label for="f-trim">Allestimento</label>
+        <label for="f-trim" data-i18n="labelTrim">Trim</label>
         <input type="text" id="f-trim" placeholder="Easy" />
       </div>
       <div class="field">
-        <label for="f-plate">Targa</label>
+        <label for="f-plate" data-i18n="labelPlate">Plate</label>
         <input type="text" id="f-plate" class="mono" placeholder="AB123CD" />
       </div>
     </div>
     <div class="field">
-      <label for="f-vin">VIN</label>
+      <label for="f-vin" data-i18n="labelVin">VIN</label>
       <input type="text" id="f-vin" class="mono" placeholder="ZFA..." />
     </div>
-    <p class="field-hint" id="hint-attrs">Compila almeno uno tra marca, modello, allestimento, targa, VIN.</p>
+    <p class="field-hint" id="hint-attrs" data-i18n="hintAttrs">Fill in at least one of brand, model, trim, plate, or VIN.</p>
 
     <div class="field-row">
       <div class="field">
-        <label for="f-reg-date">Data immatricolazione</label>
+        <label for="f-reg-date" data-i18n="labelRegDate">Registration date</label>
         <input type="date" id="f-reg-date" />
       </div>
       <div class="field">
-        <label for="f-purchase-date">Data di possesso</label>
+        <label for="f-purchase-date" data-i18n="labelPurchaseDate">Ownership date</label>
         <input type="date" id="f-purchase-date" />
       </div>
     </div>
     <div class="field">
-      <label for="f-km">Km attuali</label>
+      <label for="f-km" data-i18n="labelKm">Current mileage (km)</label>
       <input type="number" id="f-km" class="mono" min="0" step="1" placeholder="0" />
-      <p class="field-hint">0 è un valore valido (es. veicolo nuovo).</p>
+      <p class="field-hint" data-i18n="hintKmZero">0 is a valid value (e.g. brand new vehicle).</p>
     </div>
 
     <div id="mint-confirm" class="confirm-box" hidden></div>
 
-    <button class="btn btn-primary" id="btn-mint-review">Rivedi e firma</button>
+    <button class="btn btn-primary" id="btn-mint-review" data-i18n="reviewBtn">Review and sign</button>
   </section>
 
-  <!-- ===== VISTA: dettaglio veicolo ===== -->
   <section id="view-detail" hidden>
-    <button class="back-link" data-nav="list">‹ I miei veicoli</button>
+    <button class="back-link" data-nav="list" data-i18n="backToVehicles">‹ My vehicles</button>
 
     <h2 id="detail-name" style="margin-bottom:0.75rem;"></h2>
 
     <div class="odometer">
       <div class="km mono" id="detail-km">—</div>
-      <div class="km-label">km registrati</div>
+      <div class="km-label" data-i18n="kmLabel">km registered</div>
       <div class="vehicle-attrs" id="detail-attrs"></div>
     </div>
 
-    <button class="btn btn-primary" id="btn-new-intervention">+ Registra intervento</button>
+    <button class="btn btn-primary" id="btn-new-intervention" data-i18n="addInterventionBtn">+ Log service</button>
 
     <div class="timeline" id="intervention-timeline"></div>
-    <p class="empty-state" id="timeline-empty" hidden>Nessun intervento registrato ancora.</p>
+    <p class="empty-state" id="timeline-empty" data-i18n="noInterventions" hidden>No service logged yet.</p>
   </section>
 
-  <!-- ===== VISTA: nuovo intervento ===== -->
   <section id="view-intervention" hidden>
-    <button class="back-link" data-nav="detail">‹ Indietro</button>
-    <h2 style="margin-bottom:1rem;">Nuovo intervento</h2>
+    <button class="back-link" data-nav="detail" data-i18n="backBtn">‹ Back</button>
+    <h2 style="margin-bottom:1rem;" data-i18n="interventionTitle">New service entry</h2>
 
     <div class="field-row">
       <div class="field">
-        <label for="i-date">Data intervento</label>
+        <label for="i-date" data-i18n="labelDate">Service date</label>
         <input type="date" id="i-date" />
-        <p class="field-hint">Puoi indicare anche una data passata.</p>
+        <p class="field-hint" data-i18n="hintPastDate">You can also enter a past date.</p>
       </div>
       <div class="field">
-        <label for="i-km">Km</label>
+        <label for="i-km" data-i18n="labelKmShort">Mileage (km)</label>
         <input type="number" id="i-km" class="mono" min="0" step="1" placeholder="0" />
       </div>
     </div>
     <div class="field">
-      <label for="i-amount">Importo (€, opzionale)</label>
+      <label for="i-amount" data-i18n="labelAmount">Amount (€, optional)</label>
       <input type="number" id="i-amount" class="mono" min="0" step="0.01" placeholder="0.00" />
     </div>
     <div class="field">
-      <label for="i-desc">Descrizione</label>
-      <textarea id="i-desc" maxlength="280" placeholder="Es. Tagliando, sostituito olio e filtri, controllati freni."></textarea>
+      <label for="i-desc" data-i18n="labelDesc">Description</label>
+      <textarea id="i-desc" maxlength="280" data-i18n-ph="placeholderDesc" placeholder="E.g. Service, oil and filters changed, brakes checked."></textarea>
       <p class="field-hint" id="i-desc-count">0 / 280</p>
     </div>
 
     <div id="intervention-confirm" class="confirm-box" hidden></div>
 
-    <button class="btn btn-primary" id="btn-intervention-review">Rivedi e firma</button>
+    <button class="btn btn-primary" id="btn-intervention-review" data-i18n="reviewBtn">Review and sign</button>
   </section>
 
 </main>
@@ -392,12 +402,152 @@
 <script>
 "use strict";
 
-/* =========================================================================
-   MyCarBook — logica applicativa
-   Vanilla JS, nessuna dipendenza da framework, coerente con lo stack degli
-   altri progetti ChainIntegrate. Un unico file per semplicità di manutenzione
-   su un frontend di queste dimensioni (surgical edits, no build step).
-   ========================================================================= */
+const I18N = {
+  en: {
+    walletConnect: "Connect UP",
+    emptyVehiclesTitle: "No vehicles yet",
+    emptyVehiclesDesc: "Register your first car: from here on, every service stays written, on your Universal Profile.",
+    notConnectedTitle: "Connect your Universal Profile",
+    notConnectedDesc: "Your vehicles and their history are visible only to you, once you connect your UP.",
+    addVehicleBtn: "+ Add vehicle",
+    backBtn: "‹ Back",
+    mintTitle: "New vehicle",
+    labelName: "Vehicle name",
+    placeholderName: "E.g. My Panda",
+    labelBrand: "Brand",
+    labelModel: "Model",
+    labelTrim: "Trim",
+    labelPlate: "Plate",
+    labelVin: "VIN",
+    hintAttrs: "Fill in at least one of brand, model, trim, plate, or VIN.",
+    labelRegDate: "Registration date",
+    labelPurchaseDate: "Ownership date",
+    labelKm: "Current mileage (km)",
+    hintKmZero: "0 is a valid value (e.g. brand new vehicle).",
+    reviewBtn: "Review and sign",
+    confirmTitle: "Check before signing",
+    rowName: "Name",
+    rowBrandModel: "Brand / Model",
+    rowTrim: "Trim",
+    rowPlate: "Plate",
+    rowVin: "VIN",
+    rowRegDate: "Registration",
+    rowPurchaseDate: "Owned since",
+    rowKm: "Current mileage",
+    confirmSignBtn: "Confirm and sign with UP",
+    backToVehicles: "‹ My vehicles",
+    kmLabel: "km registered",
+    addInterventionBtn: "+ Log service",
+    noInterventions: "No service logged yet.",
+    interventionTitle: "New service entry",
+    labelDate: "Service date",
+    hintPastDate: "You can also enter a past date.",
+    labelKmShort: "Mileage (km)",
+    labelAmount: "Amount (€, optional)",
+    labelDesc: "Description",
+    placeholderDesc: "E.g. Service, oil and filters changed, brakes checked.",
+    rowDate: "Date",
+    rowKmIntervention: "Mileage",
+    rowAmount: "Amount",
+    rowDesc: "Description",
+    amountNotSpecified: "not specified",
+    toastNoUp: "No Universal Profile detected. Open MyCarBook from your UP's browser.",
+    toastNetworkUnsupported: "Unsupported network. Switch to LUKSO (mainnet or testnet) from your UP.",
+    toastNoContract: "Contract address not configured for this network.",
+    toastConnectFailed: "Connection cancelled or failed.",
+    toastLoadVehiclesError: "Error loading vehicles.",
+    toastFillOneField: "Fill in at least one vehicle detail (brand, model, trim, plate, or VIN).",
+    toastDatesRequired: "Registration date and ownership date are required.",
+    toastKmRequired: "Enter the current mileage (0 is valid too).",
+    toastTxSent: "Transaction sent, waiting for confirmation…",
+    toastVehicleRegistered: "Vehicle registered.",
+    toastTxFailed: "Signature cancelled or transaction failed.",
+    toastLoadHistoryError: "Error loading service history.",
+    toastDateRequired: "Enter the service date.",
+    toastKmRequiredIntervention: "Enter the mileage at the time of service.",
+    toastDescRequired: "Add a description of the service.",
+    toastDescTooLong: "Description too long (max {max} characters).",
+    toastInterventionRegistered: "Service entry registered.",
+    defaultVehicleName: "Vehicle",
+    unnamedVehicle: "Unnamed vehicle",
+    localeCode: "en-GB"
+  },
+  it: {
+    walletConnect: "Connetti UP",
+    emptyVehiclesTitle: "Nessun veicolo",
+    emptyVehiclesDesc: "Registra la tua prima auto: da qui in poi ogni intervento resta scritto, sulla tua Universal Profile.",
+    notConnectedTitle: "Connetti la tua Universal Profile",
+    notConnectedDesc: "I tuoi veicoli e il relativo storico sono visibili solo a te, collegando la tua UP.",
+    addVehicleBtn: "+ Aggiungi veicolo",
+    backBtn: "‹ Indietro",
+    mintTitle: "Nuovo veicolo",
+    labelName: "Nome del veicolo",
+    placeholderName: "Es. La mia Panda",
+    labelBrand: "Marca",
+    labelModel: "Modello",
+    labelTrim: "Allestimento",
+    labelPlate: "Targa",
+    labelVin: "VIN",
+    hintAttrs: "Compila almeno uno tra marca, modello, allestimento, targa, VIN.",
+    labelRegDate: "Data immatricolazione",
+    labelPurchaseDate: "Data di possesso",
+    labelKm: "Km attuali",
+    hintKmZero: "0 è un valore valido (es. veicolo nuovo).",
+    reviewBtn: "Rivedi e firma",
+    confirmTitle: "Verifica prima di firmare",
+    rowName: "Nome",
+    rowBrandModel: "Marca / Modello",
+    rowTrim: "Allestimento",
+    rowPlate: "Targa",
+    rowVin: "VIN",
+    rowRegDate: "Immatricolazione",
+    rowPurchaseDate: "Possesso dal",
+    rowKm: "Km attuali",
+    confirmSignBtn: "Conferma e firma con la UP",
+    backToVehicles: "‹ I miei veicoli",
+    kmLabel: "km registrati",
+    addInterventionBtn: "+ Registra intervento",
+    noInterventions: "Nessun intervento registrato ancora.",
+    interventionTitle: "Nuovo intervento",
+    labelDate: "Data intervento",
+    hintPastDate: "Puoi indicare anche una data passata.",
+    labelKmShort: "Km",
+    labelAmount: "Importo (€, opzionale)",
+    labelDesc: "Descrizione",
+    placeholderDesc: "Es. Tagliando, sostituito olio e filtri, controllati freni.",
+    rowDate: "Data",
+    rowKmIntervention: "Km",
+    rowAmount: "Importo",
+    rowDesc: "Descrizione",
+    amountNotSpecified: "non specificato",
+    toastNoUp: "Nessuna Universal Profile rilevata. Apri MyCarBook dal browser della tua UP.",
+    toastNetworkUnsupported: "Rete non supportata. Passa a LUKSO (mainnet o testnet) dalla tua UP.",
+    toastNoContract: "Indirizzo contratto non configurato per questa rete.",
+    toastConnectFailed: "Connessione annullata o non riuscita.",
+    toastLoadVehiclesError: "Errore nel caricamento dei veicoli.",
+    toastFillOneField: "Compila almeno un dato del veicolo (marca, modello, allestimento, targa o VIN).",
+    toastDatesRequired: "Data immatricolazione e data di possesso sono obbligatorie.",
+    toastKmRequired: "Inserisci i km attuali (anche 0 è valido).",
+    toastTxSent: "Transazione inviata, in attesa di conferma…",
+    toastVehicleRegistered: "Veicolo registrato.",
+    toastTxFailed: "Firma annullata o transazione non riuscita.",
+    toastLoadHistoryError: "Errore nel caricamento dello storico interventi.",
+    toastDateRequired: "Indica la data dell'intervento.",
+    toastKmRequiredIntervention: "Indica i km al momento dell'intervento.",
+    toastDescRequired: "Aggiungi una descrizione dell'intervento.",
+    toastDescTooLong: "Descrizione troppo lunga (max {max} caratteri).",
+    toastInterventionRegistered: "Intervento registrato.",
+    defaultVehicleName: "Veicolo",
+    unnamedVehicle: "Veicolo senza nome",
+    localeCode: "it-IT"
+  }
+};
+
+function detectInitialLang(){
+  const saved = localStorage.getItem("mcb_lang");
+  if(saved === "it" || saved === "en") return saved;
+  return (navigator.language || "").toLowerCase().startsWith("it") ? "it" : "en";
+}
 
 const state = {
   provider: null,
@@ -405,13 +555,51 @@ const state = {
   address: null,
   chainId: null,
   contract: null,
-  vehicles: [],       // { tokenId, name, brand, model, trim, plate, vin, km, regDate, purchaseDate }
+  vehicles: [],
   currentTokenId: null,
+  lang: detectInitialLang(),
 };
 
-// ---------- Utility ----------
+function t(key, vars){
+  let str = (I18N[state.lang] && I18N[state.lang][key]) || I18N.en[key] || key;
+  if(vars){
+    for(const k in vars){ str = str.replace(`{${k}}`, vars[k]); }
+  }
+  return str;
+}
+
+function localeCode(){
+  return I18N[state.lang].localeCode;
+}
 
 function $(id){ return document.getElementById(id); }
+
+function applyStaticTranslations(){
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  $("btn-lang").textContent = state.lang === "it" ? "EN" : "IT";
+  $("i-desc-count").textContent = `${$("i-desc").value.length} / ${MAX_DESCRIPTION_LENGTH}`;
+  if(!state.address){
+    $("btn-connect").textContent = t("walletConnect");
+  }
+}
+
+function setLang(lang){
+  state.lang = lang;
+  localStorage.setItem("mcb_lang", lang);
+  applyStaticTranslations();
+  if(state.vehicles && state.vehicles.length) renderVehicleList();
+  if(state.currentTokenId) loadInterventions(state.currentTokenId);
+}
+
+$("btn-lang").addEventListener("click", () => {
+  setLang(state.lang === "it" ? "en" : "it");
+});
 
 function showToast(message, isError=false){
   const el = document.createElement("div");
@@ -429,14 +617,14 @@ function dateToTimestamp(dateInputValue){
 function timestampToDateLabel(ts){
   if(!ts || Number(ts) === 0) return "—";
   const d = new Date(Number(ts) * 1000);
-  return d.toLocaleDateString("it-IT", { day:"2-digit", month:"2-digit", year:"numeric" });
+  return d.toLocaleDateString(localeCode(), { day:"2-digit", month:"2-digit", year:"numeric" });
 }
 
 function timestampToStampParts(ts){
   const d = new Date(Number(ts) * 1000);
   return {
     day: String(d.getUTCDate()).padStart(2,"0"),
-    month: d.toLocaleDateString("it-IT", { month:"short" }).toUpperCase(),
+    month: d.toLocaleDateString(localeCode(), { month:"short" }).toUpperCase(),
     year: d.getUTCFullYear()
   };
 }
@@ -449,10 +637,8 @@ function eurosToCents(value){
 function centsToEuroLabel(cents){
   const n = Number(cents);
   if(!n) return null;
-  return (n / 100).toLocaleString("it-IT", { style:"currency", currency:"EUR" });
+  return (n / 100).toLocaleString(localeCode(), { style:"currency", currency:"EUR" });
 }
-
-// ---------- Navigazione ----------
 
 function navigate(view){
   ["list","mint","detail","intervention"].forEach(v => {
@@ -465,15 +651,10 @@ document.querySelectorAll("[data-nav]").forEach(btn => {
   btn.addEventListener("click", () => navigate(btn.dataset.nav));
 });
 
-// ---------- Connessione UP ----------
-// All'interno del browser di una Universal Profile (estensione o wallet
-// mobile) il provider iniettato è tipicamente `window.lukso`; fallback su
-// `window.ethereum` per compatibilità con altri contesti EIP-1193.
-
 async function connectWallet(){
   const injected = window.lukso || window.ethereum;
   if(!injected){
-    showToast("Nessuna Universal Profile rilevata. Apri MyCarBook dal browser della tua UP.", true);
+    showToast(t("toastNoUp"), true);
     return;
   }
 
@@ -487,11 +668,11 @@ async function connectWallet(){
 
     const netConfig = NETWORKS[state.chainId];
     if(!netConfig){
-      showToast("Rete non supportata. Passa a LUKSO (mainnet o testnet) dalla tua UP.", true);
+      showToast(t("toastNetworkUnsupported"), true);
       return;
     }
     if(netConfig.contractAddress === "0x0000000000000000000000000000000000000000"){
-      showToast("Indirizzo contratto non configurato per questa rete in config.js.", true);
+      showToast(t("toastNoContract"), true);
       return;
     }
 
@@ -505,13 +686,11 @@ async function connectWallet(){
     await loadVehicles();
   }catch(err){
     console.error(err);
-    showToast("Connessione annullata o non riuscita.", true);
+    showToast(t("toastConnectFailed"), true);
   }
 }
 
 $("btn-connect").addEventListener("click", connectWallet);
-
-// ---------- Lettura veicoli ----------
 
 async function loadVehicles(){
   try{
@@ -520,7 +699,7 @@ async function loadVehicles(){
 
     for(const tokenId of tokenIds){
       const info = await state.contract.getVehicleInfo(tokenId);
-      let meta = { name: "Veicolo", attributes: [] };
+      let meta = { name: t("defaultVehicleName"), attributes: [] };
       try{
         const metadataBytes = await state.contract.getDataForTokenId(tokenId, LSP4_METADATA_KEY);
         meta = await decodeVehicleMetadata(metadataBytes);
@@ -530,7 +709,7 @@ async function loadVehicles(){
 
       state.vehicles.push({
         tokenId,
-        name: meta.name || "Veicolo senza nome",
+        name: meta.name || t("unnamedVehicle"),
         attributes: meta.attributes || [],
         km: info.km,
         regDate: info.registrationDate,
@@ -541,13 +720,10 @@ async function loadVehicles(){
     renderVehicleList();
   }catch(err){
     console.error(err);
-    showToast("Errore nel caricamento dei veicoli.", true);
+    showToast(t("toastLoadVehiclesError"), true);
   }
 }
 
-// Decodifica il VerifiableURI e risolve il JSON da IPFS.
-// NB: erc725.js gestisce l'incapsulamento VerifiableURI; qui usiamo la sua
-// utility di decodifica invece di fare parsing manuale dei byte.
 async function decodeVehicleMetadata(metadataBytes){
   const schema = [{
     name: "LSP4Metadata",
@@ -582,7 +758,7 @@ function renderVehicleList(){
       <div class="vehicle-thumb">🚗</div>
       <div class="vehicle-card-body">
         <div class="vehicle-card-name">${escapeHtml(v.name)}</div>
-        <div class="vehicle-card-meta">${Number(v.km).toLocaleString("it-IT")} km</div>
+        <div class="vehicle-card-meta">${Number(v.km).toLocaleString(localeCode())} km</div>
       </div>
     `;
     card.addEventListener("click", () => openVehicleDetail(v.tokenId));
@@ -595,8 +771,6 @@ function escapeHtml(str){
   div.textContent = str || "";
   return div.innerHTML;
 }
-
-// ---------- Mint veicolo ----------
 
 $("btn-new-vehicle").addEventListener("click", () => navigate("mint"));
 
@@ -612,36 +786,36 @@ $("btn-mint-review").addEventListener("click", () => {
   const km = $("f-km").value;
 
   if(![brand, model, trim, plate, vin].some(v => v.length > 0)){
-    showToast("Compila almeno un dato del veicolo (marca, modello, allestimento, targa o VIN).", true);
+    showToast(t("toastFillOneField"), true);
     return;
   }
   if(!regDate || !purchaseDate){
-    showToast("Data immatricolazione e data di possesso sono obbligatorie.", true);
+    showToast(t("toastDatesRequired"), true);
     return;
   }
   if(km === ""){
-    showToast("Inserisci i km attuali (anche 0 è valido).", true);
+    showToast(t("toastKmRequired"), true);
     return;
   }
 
   const box = $("mint-confirm");
   box.hidden = false;
   box.innerHTML = `
-    <h3>Verifica prima di firmare</h3>
-    <div class="confirm-row"><span class="k">Nome</span><span>${escapeHtml(name || "—")}</span></div>
-    <div class="confirm-row"><span class="k">Marca / Modello</span><span>${escapeHtml(brand)} ${escapeHtml(model)}</span></div>
-    <div class="confirm-row"><span class="k">Allestimento</span><span>${escapeHtml(trim || "—")}</span></div>
-    <div class="confirm-row"><span class="k">Targa</span><span>${escapeHtml(plate || "—")}</span></div>
-    <div class="confirm-row"><span class="k">VIN</span><span>${escapeHtml(vin || "—")}</span></div>
-    <div class="confirm-row"><span class="k">Immatricolazione</span><span>${regDate}</span></div>
-    <div class="confirm-row"><span class="k">Possesso dal</span><span>${purchaseDate}</span></div>
-    <div class="confirm-row"><span class="k">Km attuali</span><span>${Number(km).toLocaleString("it-IT")}</span></div>
+    <h3>${t("confirmTitle")}</h3>
+    <div class="confirm-row"><span class="k">${t("rowName")}</span><span>${escapeHtml(name || "—")}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowBrandModel")}</span><span>${escapeHtml(brand)} ${escapeHtml(model)}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowTrim")}</span><span>${escapeHtml(trim || "—")}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowPlate")}</span><span>${escapeHtml(plate || "—")}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowVin")}</span><span>${escapeHtml(vin || "—")}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowRegDate")}</span><span>${regDate}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowPurchaseDate")}</span><span>${purchaseDate}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowKm")}</span><span>${Number(km).toLocaleString(localeCode())}</span></div>
   `;
 
   const confirmBtn = document.createElement("button");
   confirmBtn.className = "btn btn-primary";
   confirmBtn.style.marginTop = "0.75rem";
-  confirmBtn.textContent = "Conferma e firma con la UP";
+  confirmBtn.textContent = t("confirmSignBtn");
   confirmBtn.addEventListener("click", () => submitMint({ name, brand, model, trim, plate, vin, regDate, purchaseDate, km }));
   box.appendChild(confirmBtn);
 
@@ -651,16 +825,16 @@ $("btn-mint-review").addEventListener("click", () => {
 async function submitMint(data){
   try{
     const attributes = [];
-    if(data.brand) attributes.push({ key:"Marca", value:data.brand, type:"string" });
-    if(data.model) attributes.push({ key:"Modello", value:data.model, type:"string" });
-    if(data.trim) attributes.push({ key:"Allestimento", value:data.trim, type:"string" });
-    if(data.plate) attributes.push({ key:"Targa", value:data.plate, type:"string" });
+    if(data.brand) attributes.push({ key:"Brand", value:data.brand, type:"string" });
+    if(data.model) attributes.push({ key:"Model", value:data.model, type:"string" });
+    if(data.trim) attributes.push({ key:"Trim", value:data.trim, type:"string" });
+    if(data.plate) attributes.push({ key:"Plate", value:data.plate, type:"string" });
     if(data.vin) attributes.push({ key:"VIN", value:data.vin, type:"string" });
 
     const metadataJson = {
       LSP4Metadata: {
-        name: data.name || `${data.brand} ${data.model}`.trim() || "Veicolo",
-        description: "Libretto di manutenzione on-chain — MyCarBook.",
+        name: data.name || `${data.brand} ${data.model}`.trim() || t("defaultVehicleName"),
+        description: "On-chain maintenance logbook — MyCarBook.",
         links: [],
         icon: [],
         images: [],
@@ -669,9 +843,6 @@ async function submitMint(data){
       }
     };
 
-    // Upload del JSON su IPFS (Pinata, come da workflow già in uso su
-    // Birra20Venti/MatchPredictor) — endpoint da collegare all'account
-    // Pinata del progetto. Segnaposto qui sotto.
     const { cid } = await uploadJsonToIpfs(metadataJson);
 
     const schema = [{
@@ -692,16 +863,16 @@ async function submitMint(data){
       BigInt(data.km),
       encoded.values[0]
     );
-    showToast("Transazione inviata, in attesa di conferma…");
+    showToast(t("toastTxSent"));
     await tx.wait();
-    showToast("Veicolo registrato.");
+    showToast(t("toastVehicleRegistered"));
 
     clearMintForm();
     await loadVehicles();
     navigate("list");
   }catch(err){
     console.error(err);
-    showToast("Firma annullata o transazione non riuscita.", true);
+    showToast(t("toastTxFailed"), true);
   }
 }
 
@@ -711,13 +882,19 @@ function clearMintForm(){
   $("mint-confirm").hidden = true;
 }
 
-// Placeholder di upload IPFS — sostituire con la chiamata reale a Pinata
-// (stesso pattern già in uso per Birra20Venti: browser -> Pinata pinJSON).
 async function uploadJsonToIpfs(json){
-  throw new Error("uploadJsonToIpfs non ancora collegato a Pinata: vedi README.");
+  const res = await fetch("/api/pin-json", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(json)
+  });
+  if(!res.ok){
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || "IPFS pin error.");
+  }
+  const data = await res.json();
+  return { cid: data.cid };
 }
-
-// ---------- Dettaglio veicolo ----------
 
 async function openVehicleDetail(tokenId){
   state.currentTokenId = tokenId;
@@ -725,7 +902,7 @@ async function openVehicleDetail(tokenId){
   if(!v) return;
 
   $("detail-name").textContent = v.name;
-  $("detail-km").textContent = Number(v.km).toLocaleString("it-IT");
+  $("detail-km").textContent = Number(v.km).toLocaleString(localeCode());
 
   const attrsEl = $("detail-attrs");
   attrsEl.innerHTML = "";
@@ -748,8 +925,6 @@ async function loadInterventions(tokenId){
     const filter = state.contract.filters.InterventionLogged(tokenId);
     const events = await state.contract.queryFilter(filter);
 
-    // Storico letto dagli eventi (append-only), ordinato per data dichiarata
-    // dall'utente — non per ordine di blocco, come deciso in fase di design.
     const sorted = events
       .map(e => e.args)
       .sort((a,b) => Number(b.date) - Number(a.date));
@@ -769,7 +944,7 @@ async function loadInterventions(tokenId){
         <div class="stamp-card">
           <div class="desc">${escapeHtml(ev.description)}</div>
           <div class="meta">
-            <span>${Number(ev.km).toLocaleString("it-IT")} km</span>
+            <span>${Number(ev.km).toLocaleString(localeCode())} km</span>
             ${amountLabel ? `<span>${amountLabel}</span>` : ""}
           </div>
         </div>
@@ -778,11 +953,9 @@ async function loadInterventions(tokenId){
     }
   }catch(err){
     console.error(err);
-    showToast("Errore nel caricamento dello storico interventi.", true);
+    showToast(t("toastLoadHistoryError"), true);
   }
 }
-
-// ---------- Nuovo intervento ----------
 
 $("btn-new-intervention").addEventListener("click", () => {
   navigate("intervention");
@@ -799,36 +972,36 @@ $("btn-intervention-review").addEventListener("click", () => {
   const desc = $("i-desc").value.trim();
 
   if(!date){
-    showToast("Indica la data dell'intervento.", true);
+    showToast(t("toastDateRequired"), true);
     return;
   }
   if(km === ""){
-    showToast("Indica i km al momento dell'intervento.", true);
+    showToast(t("toastKmRequiredIntervention"), true);
     return;
   }
   if(desc.length === 0){
-    showToast("Aggiungi una descrizione dell'intervento.", true);
+    showToast(t("toastDescRequired"), true);
     return;
   }
   if(desc.length > MAX_DESCRIPTION_LENGTH){
-    showToast(`Descrizione troppo lunga (max ${MAX_DESCRIPTION_LENGTH} caratteri).`, true);
+    showToast(t("toastDescTooLong", { max: MAX_DESCRIPTION_LENGTH }), true);
     return;
   }
 
   const box = $("intervention-confirm");
   box.hidden = false;
   box.innerHTML = `
-    <h3>Verifica prima di firmare</h3>
-    <div class="confirm-row"><span class="k">Data</span><span>${date}</span></div>
-    <div class="confirm-row"><span class="k">Km</span><span>${Number(km).toLocaleString("it-IT")}</span></div>
-    <div class="confirm-row"><span class="k">Importo</span><span>${amount ? centsToEuroLabel(eurosToCents(amount)) : "non specificato"}</span></div>
-    <div class="confirm-row"><span class="k">Descrizione</span><span>${escapeHtml(desc)}</span></div>
+    <h3>${t("confirmTitle")}</h3>
+    <div class="confirm-row"><span class="k">${t("rowDate")}</span><span>${date}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowKmIntervention")}</span><span>${Number(km).toLocaleString(localeCode())}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowAmount")}</span><span>${amount ? centsToEuroLabel(eurosToCents(amount)) : t("amountNotSpecified")}</span></div>
+    <div class="confirm-row"><span class="k">${t("rowDesc")}</span><span>${escapeHtml(desc)}</span></div>
   `;
 
   const confirmBtn = document.createElement("button");
   confirmBtn.className = "btn btn-primary";
   confirmBtn.style.marginTop = "0.75rem";
-  confirmBtn.textContent = "Conferma e firma con la UP";
+  confirmBtn.textContent = t("confirmSignBtn");
   confirmBtn.addEventListener("click", () => submitIntervention({ date, km, amount, desc }));
   box.appendChild(confirmBtn);
 
@@ -844,24 +1017,22 @@ async function submitIntervention(data){
       BigInt(eurosToCents(data.amount)),
       data.desc
     );
-    showToast("Transazione inviata, in attesa di conferma…");
+    showToast(t("toastTxSent"));
     await tx.wait();
-    showToast("Intervento registrato.");
+    showToast(t("toastInterventionRegistered"));
 
     clearInterventionForm();
     navigate("detail");
     await loadInterventions(state.currentTokenId);
 
-    // Aggiorna anche i km mostrati nella vista veicolo se l'intervento
-    // riporta km più recenti di quelli registrati al mint/ultima lettura.
     const v = state.vehicles.find(x => x.tokenId === state.currentTokenId);
     if(v && Number(data.km) > Number(v.km)){
       v.km = data.km;
-      $("detail-km").textContent = Number(v.km).toLocaleString("it-IT");
+      $("detail-km").textContent = Number(v.km).toLocaleString(localeCode());
     }
   }catch(err){
     console.error(err);
-    showToast("Firma annullata o transazione non riuscita.", true);
+    showToast(t("toastTxFailed"), true);
   }
 }
 
@@ -871,7 +1042,7 @@ function clearInterventionForm(){
   $("intervention-confirm").hidden = true;
 }
 
-// ---------- Avvio ----------
+applyStaticTranslations();
 navigate("list");
 </script>
 
