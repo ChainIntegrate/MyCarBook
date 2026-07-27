@@ -12,9 +12,6 @@
 
 <!-- ethers v6 (UMD) -->
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<!-- erc725.js: URL da riverificare con curl contro la versione effettiva
-     prima del deploy (i path dei bundle browser cambiano tra versioni) -->
-<script src="https://cdn.jsdelivr.net/npm/@erc725/erc725.js@0.28.2/build/main/src/index.js"></script>
 
 <script src="config.js"></script>
 
@@ -345,6 +342,12 @@
       <p class="field-hint" data-i18n="hintKmZero">0 is a valid value (e.g. brand new vehicle).</p>
     </div>
 
+    <div class="field" id="photo-upload-section" hidden>
+      <label for="f-photo" data-i18n="labelPhoto">Vehicle photo (optional)</label>
+      <input type="file" id="f-photo" accept="image/*" />
+      <p class="field-hint" data-i18n="hintPhoto">Square image, ideally under 800px per side.</p>
+    </div>
+
     <div id="mint-confirm" class="confirm-box" hidden></div>
 
     <button class="btn btn-primary" id="btn-mint-review" data-i18n="reviewBtn">Review and sign</button>
@@ -399,8 +402,14 @@
 
 </main>
 
-<script>
+<script type="module">
 "use strict";
+
+// erc725.js non pubblica un bundle UMD col global window.ERC725 — va
+// importato come modulo ES. esm.sh ricompila qualunque pacchetto npm in un
+// bundle browser-compatibile, a differenza di jsDelivr che serve il file
+// così com'è pubblicato (CommonJS, inutilizzabile con un <script> classico).
+import { ERC725 } from "https://esm.sh/@erc725/erc725.js@0.28.2";
 
 const I18N = {
   en: {
@@ -425,6 +434,10 @@ const I18N = {
     labelKm: "Current mileage (km)",
     hintKmZero: "0 is a valid value (e.g. brand new vehicle).",
     reviewBtn: "Review and sign",
+    labelPhoto: "Vehicle photo (optional)",
+    hintPhoto: "Square image, ideally under 800px per side.",
+    toastPhotoTooBig: "Image too large (max 5MB).",
+    toastPhotoUploadFailed: "Photo upload failed, vehicle registered without photo.",
     confirmTitle: "Check before signing",
     rowName: "Name",
     rowBrandModel: "Brand / Model",
@@ -494,6 +507,10 @@ const I18N = {
     labelKm: "Km attuali",
     hintKmZero: "0 è un valore valido (es. veicolo nuovo).",
     reviewBtn: "Rivedi e firma",
+    labelPhoto: "Foto veicolo (opzionale)",
+    hintPhoto: "Immagine quadrata, idealmente sotto gli 800px di lato.",
+    toastPhotoTooBig: "Immagine troppo grande (max 5MB).",
+    toastPhotoUploadFailed: "Upload foto non riuscito, veicolo registrato senza foto.",
     confirmTitle: "Verifica prima di firmare",
     rowName: "Nome",
     rowBrandModel: "Marca / Modello",
@@ -558,6 +575,7 @@ const state = {
   vehicles: [],
   currentTokenId: null,
   lang: detectInitialLang(),
+  canUploadPhoto: false,
 };
 
 function t(key, vars){
@@ -683,6 +701,7 @@ async function connectWallet(){
     $("list-not-connected").hidden = true;
     $("btn-new-vehicle").hidden = false;
 
+    await checkPhotoAccess();
     await loadVehicles();
   }catch(err){
     console.error(err);
@@ -691,6 +710,22 @@ async function connectWallet(){
 }
 
 $("btn-connect").addEventListener("click", connectWallet);
+
+// Gate lato UI: solo indirizzi che Simone autorizza via
+// backend/allowed-addresses.json vedono il bottone di upload foto al mint.
+// Non è un confine di sicurezza (chiunque potrebbe scrivere metadata
+// direttamente dalla propria UP), è solo un rollout controllato della feature.
+async function checkPhotoAccess(){
+  try{
+    const res = await fetch(`/api/photo-access/${state.address}`);
+    const data = await res.json();
+    state.canUploadPhoto = !!data.allowed;
+  }catch(err){
+    console.warn("Controllo accesso foto non riuscito, la nascondo per sicurezza:", err);
+    state.canUploadPhoto = false;
+  }
+  $("photo-upload-section").hidden = !state.canUploadPhoto;
+}
 
 async function loadVehicles(){
   try{
@@ -851,13 +886,15 @@ async function submitMint(data){
     if(data.plate) attributes.push({ key:"Plate", value:data.plate, type:"string" });
     if(data.vin) attributes.push({ key:"VIN", value:data.vin, type:"string" });
 
+    const photo = await uploadVehiclePhotoIfProvided();
+
     const metadataJson = {
       LSP4Metadata: {
         name: data.name || `${data.brand} ${data.model}`.trim() || t("defaultVehicleName"),
         description: "On-chain maintenance logbook — MyCarBook.",
         links: [],
-        icon: [],
-        images: [],
+        icon: photo ? [photo] : [],
+        images: photo ? [[photo]] : [],
         assets: [],
         attributes
       }
@@ -896,9 +933,47 @@ async function submitMint(data){
   }
 }
 
+// Carica la foto su Pinata se l'utente ne ha selezionata una (bottone visibile
+// solo se autorizzato). Se l'upload fallisce, avvisa ma NON blocca il mint —
+// meglio un veicolo senza foto che un mint perso per un problema di rete.
+async function uploadVehiclePhotoIfProvided(){
+  const fileInput = $("f-photo");
+  if(!state.canUploadPhoto || !fileInput.files || fileInput.files.length === 0) return null;
+
+  const file = fileInput.files[0];
+  if(file.size > 5 * 1024 * 1024){
+    showToast(t("toastPhotoTooBig"), true);
+    return null;
+  }
+
+  try{
+    const buffer = await file.arrayBuffer();
+    const hash = ethers.keccak256(new Uint8Array(buffer));
+    const bitmap = await createImageBitmap(file);
+
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch("/api/pin-file", { method: "POST", body: formData });
+    if(!res.ok) throw new Error("upload immagine fallito");
+    const data = await res.json();
+
+    return {
+      width: bitmap.width,
+      height: bitmap.height,
+      url: `ipfs://${data.cid}`,
+      verification: { method: "keccak256(bytes)", data: hash }
+    };
+  }catch(err){
+    console.warn("Upload foto non riuscito:", err);
+    showToast(t("toastPhotoUploadFailed"), true);
+    return null;
+  }
+}
+
 function clearMintForm(){
   ["f-name","f-brand","f-model","f-trim","f-plate","f-vin","f-reg-date","f-purchase-date","f-km"]
     .forEach(id => $(id).value = "");
+  $("f-photo").value = "";
   $("mint-confirm").hidden = true;
 }
 
