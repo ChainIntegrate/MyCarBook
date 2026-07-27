@@ -734,15 +734,35 @@ async function decodeVehicleMetadata(metadataBytes){
   }];
 
   const decoded = ERC725.decodeData([{ keyName: "LSP4Metadata", value: metadataBytes }], schema);
-  const url = decoded[0].value.url.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/");
-  const res = await fetch(url);
-  const json = await res.json();
+  const cidPath = decoded[0].value.url.replace("ipfs://", "");
+
+  const json = await fetchIpfsJsonWithFallback(cidPath);
   const lsp4 = json.LSP4Metadata || {};
   return {
     name: lsp4.name,
     attributes: lsp4.attributes || [],
     icon: (lsp4.icon && lsp4.icon[0] && lsp4.icon[0].url) || null
   };
+}
+
+async function fetchIpfsJsonWithFallback(cidPath){
+  const gateways = [
+    `https://peach-familiar-wombat-848.mypinata.cloud/ipfs/${cidPath}`,
+    `https://api.universalprofile.cloud/ipfs/${cidPath}`
+  ];
+
+  let lastError;
+  for(const url of gateways){
+    try{
+      const res = await fetch(url);
+      if(!res.ok) throw new Error(`Gateway ha risposto ${res.status}`);
+      return await res.json();
+    }catch(err){
+      console.warn("Gateway IPFS non disponibile, provo il successivo:", url, err);
+      lastError = err;
+    }
+  }
+  throw lastError;
 }
 
 function renderVehicleList(){
