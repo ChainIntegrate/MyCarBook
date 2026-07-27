@@ -253,6 +253,7 @@
     z-index:50;
   }
   .toast.error{ border-color:var(--danger); color:var(--danger); }
+  .toast.success{ border-color:var(--motor-green); color:var(--motor-green); font-weight:600; }
 
   [hidden]{ display:none !important; }
 
@@ -624,12 +625,15 @@ $("btn-lang").addEventListener("click", () => {
   setLang(state.lang === "it" ? "en" : "it");
 });
 
-function showToast(message, isError=false){
+function showToast(message, variant=false){
   const el = document.createElement("div");
-  el.className = "toast" + (isError ? " error" : "");
+  let cls = "toast";
+  if(variant === true || variant === "error") cls += " error";
+  else if(variant === "success") cls += " success";
+  el.className = cls;
   el.textContent = message;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(() => el.remove(), variant === "success" ? 5000 : 4000);
 }
 
 function dateToTimestamp(dateInputValue){
@@ -892,13 +896,19 @@ $("btn-mint-review").addEventListener("click", () => {
   confirmBtn.className = "btn btn-primary";
   confirmBtn.style.marginTop = "0.75rem";
   confirmBtn.textContent = t("confirmSignBtn");
-  confirmBtn.addEventListener("click", () => submitMint({ name, brand, model, trim, plate, vin, regDate, purchaseDate, km }));
+  confirmBtn.addEventListener("click", (e) => submitMint({ name, brand, model, trim, plate, vin, regDate, purchaseDate, km }, e.currentTarget));
   box.appendChild(confirmBtn);
 
   box.scrollIntoView({ behavior: "smooth" });
 });
 
-async function submitMint(data){
+async function submitMint(data, confirmBtn){
+  const originalBtnText = confirmBtn ? confirmBtn.textContent : null;
+  if(confirmBtn){
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = t("toastTxSent");
+  }
+
   try{
     const attributes = [];
     if(data.brand) attributes.push({ key:"Brand", value:data.brand, type:"string" });
@@ -943,7 +953,7 @@ async function submitMint(data){
     );
     showToast(t("toastTxSent"));
     await tx.wait();
-    showToast(t("toastVehicleRegistered"));
+    showToast("✓ " + t("toastVehicleRegistered"), "success");
 
     clearMintForm();
     await loadVehicles();
@@ -951,6 +961,10 @@ async function submitMint(data){
   }catch(err){
     console.error(err);
     showToast(t("toastTxFailed"), true);
+    if(confirmBtn){
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = originalBtnText;
+    }
   }
 }
 
@@ -1128,13 +1142,19 @@ $("btn-intervention-review").addEventListener("click", () => {
   confirmBtn.className = "btn btn-primary";
   confirmBtn.style.marginTop = "0.75rem";
   confirmBtn.textContent = t("confirmSignBtn");
-  confirmBtn.addEventListener("click", () => submitIntervention({ date, km, amount, desc }));
+  confirmBtn.addEventListener("click", (e) => submitIntervention({ date, km, amount, desc }, e.currentTarget));
   box.appendChild(confirmBtn);
 
   box.scrollIntoView({ behavior:"smooth" });
 });
 
-async function submitIntervention(data){
+async function submitIntervention(data, confirmBtn){
+  const originalBtnText = confirmBtn ? confirmBtn.textContent : null;
+  if(confirmBtn){
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = t("toastTxSent");
+  }
+
   try{
     const tx = await state.contract.logIntervention(
       state.currentTokenId,
@@ -1145,7 +1165,7 @@ async function submitIntervention(data){
     );
     showToast(t("toastTxSent"));
     await tx.wait();
-    showToast(t("toastInterventionRegistered"));
+    showToast("✓ " + t("toastInterventionRegistered"), "success");
 
     clearInterventionForm();
     navigate("detail");
@@ -1159,6 +1179,10 @@ async function submitIntervention(data){
   }catch(err){
     console.error(err);
     showToast(t("toastTxFailed"), true);
+    if(confirmBtn){
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = originalBtnText;
+    }
   }
 }
 
