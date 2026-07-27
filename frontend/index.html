@@ -342,10 +342,11 @@
       <p class="field-hint" data-i18n="hintKmZero">0 is a valid value (e.g. brand new vehicle).</p>
     </div>
 
-    <div class="field" id="photo-upload-section" hidden>
+    <div class="field" id="photo-upload-section">
       <label for="f-photo" data-i18n="labelPhoto">Vehicle photo (optional)</label>
-      <input type="file" id="f-photo" accept="image/*" />
+      <input type="file" id="f-photo" accept="image/*" disabled />
       <p class="field-hint" data-i18n="hintPhoto">Square image, ideally under 800px per side.</p>
+      <p class="field-hint warn" id="photo-locked-hint" data-i18n="hintPhotoLocked">Write to info@chainintegrate.it to enable this feature.</p>
     </div>
 
     <div id="mint-confirm" class="confirm-box" hidden></div>
@@ -436,6 +437,7 @@ const I18N = {
     reviewBtn: "Review and sign",
     labelPhoto: "Vehicle photo (optional)",
     hintPhoto: "Square image, ideally under 800px per side.",
+    hintPhotoLocked: "Write to info@chainintegrate.it to enable this feature.",
     toastPhotoTooBig: "Image too large (max 5MB).",
     toastPhotoUploadFailed: "Photo upload failed, vehicle registered without photo.",
     confirmTitle: "Check before signing",
@@ -509,6 +511,7 @@ const I18N = {
     reviewBtn: "Rivedi e firma",
     labelPhoto: "Foto veicolo (opzionale)",
     hintPhoto: "Immagine quadrata, idealmente sotto gli 800px di lato.",
+    hintPhotoLocked: "Scrivi a info@chainintegrate.it per abilitare questa funzione.",
     toastPhotoTooBig: "Immagine troppo grande (max 5MB).",
     toastPhotoUploadFailed: "Upload foto non riuscito, veicolo registrato senza foto.",
     confirmTitle: "Verifica prima di firmare",
@@ -721,10 +724,11 @@ async function checkPhotoAccess(){
     const data = await res.json();
     state.canUploadPhoto = !!data.allowed;
   }catch(err){
-    console.warn("Controllo accesso foto non riuscito, la nascondo per sicurezza:", err);
+    console.warn("Controllo accesso foto non riuscito, la disabilito per sicurezza:", err);
     state.canUploadPhoto = false;
   }
-  $("photo-upload-section").hidden = !state.canUploadPhoto;
+  $("f-photo").disabled = !state.canUploadPhoto;
+  $("photo-locked-hint").hidden = state.canUploadPhoto;
 }
 
 async function loadVehicles(){
