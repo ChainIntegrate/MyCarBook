@@ -6,6 +6,12 @@
 <title>MyCarBook — On-chain vehicle logbook</title>
 <meta name="description" content="Your vehicle's maintenance history, on-chain, on your Universal Profile." />
 
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<meta property="og:image" content="mycarbook_banner_1920x600.png" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -68,8 +74,19 @@
     border-bottom:1px solid var(--line);
     gap:0.6rem;
   }
-  .wordmark{ font-size:1.15rem; color:var(--ink); }
+  .wordmark{ font-size:1.15rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem; }
   .wordmark span{ color:var(--brass); }
+  .wordmark-icon{ height:32px; width:32px; border-radius:8px; display:block; }
+
+  .powered-by-strip{
+    display:flex; align-items:center; justify-content:center; gap:0.4rem;
+    padding:0.45rem 0;
+    font-family:var(--mono); font-size:0.68rem; letter-spacing:0.04em;
+    color:var(--ink-muted);
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+  }
+  .powered-by-icon{ height:18px; width:18px; border-radius:50%; object-fit:cover; display:block; }
 
   .header-actions{ display:flex; align-items:center; gap:0.5rem; }
 
@@ -265,12 +282,21 @@
 <body>
 
 <header>
-  <div class="wordmark">My<span>Car</span>Book</div>
+  <div class="wordmark">
+    <img src="mycarbook-logo.png" alt="" class="wordmark-icon" />
+    My<span>Car</span>Book
+  </div>
   <div class="header-actions">
     <button class="lang-toggle" id="btn-lang">IT</button>
     <button class="wallet-chip" id="btn-connect" data-i18n="walletConnect">Connect UP</button>
   </div>
 </header>
+
+<div class="powered-by-strip">
+  <span data-i18n="poweredBy">Powered by</span>
+  <img src="Lukso_400x400.jpg" alt="LUKSO" class="powered-by-icon" />
+  <span>LUKSO</span>
+</div>
 
 <main>
 
@@ -418,6 +444,7 @@ import { ERC725 } from "https://esm.sh/@erc725/erc725.js@0.28.2";
 const I18N = {
   en: {
     walletConnect: "Connect UP",
+    poweredBy: "Powered by",
     emptyVehiclesTitle: "No vehicles yet",
     emptyVehiclesDesc: "Register your first car: from here on, every service stays written, on your Universal Profile.",
     notConnectedTitle: "Connect your Universal Profile",
@@ -492,6 +519,7 @@ const I18N = {
   },
   it: {
     walletConnect: "Connetti UP",
+    poweredBy: "Powered by",
     emptyVehiclesTitle: "Nessun veicolo",
     emptyVehiclesDesc: "Registra la tua prima auto: da qui in poi ogni intervento resta scritto, sulla tua Universal Profile.",
     notConnectedTitle: "Connetti la tua Universal Profile",

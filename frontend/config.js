@@ -28,6 +28,8 @@ const MYCARBOOK_ABI = [
   // prima di andare in produzione.
   "function tokenIdsOf(address tokenOwner) external view returns (bytes32[])",
   "function getDataForTokenId(bytes32 tokenId, bytes32 dataKey) external view returns (bytes)",
+  "function setData(bytes32 dataKey, bytes calldata dataValue) external",
+  "function owner() external view returns (address)",
   "event VehicleMinted(bytes32 indexed tokenId, address indexed owner, uint256 registrationDate, uint256 purchaseDate, uint256 km)",
   "event InterventionLogged(bytes32 indexed tokenId, address indexed loggedBy, uint256 date, uint256 km, uint256 amountCents, string description)"
 ];

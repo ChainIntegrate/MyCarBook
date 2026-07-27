@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MyCarBook — Collection admin</title>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="config.js"></script>
+
+<style>
+  body{ font-family:monospace; background:#10181A; color:#EDE7DD; max-width:640px; margin:2rem auto; padding:1rem; }
+  h1{ font-size:1.1rem; }
+  button{ padding:0.6rem 1rem; margin:0.4rem 0; cursor:pointer; }
+  .row{ margin:1rem 0; }
+  .log{ background:#1A2528; padding:0.75rem; border-radius:6px; white-space:pre-wrap; font-size:0.8rem; max-height:300px; overflow:auto; }
+  input[type=file]{ color:#EDE7DD; }
+</style>
+</head>
+<body>
+
+<h1>MyCarBook — Collection metadata admin</h1>
+<p>Pagina non collegata alla navigazione pubblica. Serve solo a impostare, una tantum, l'icona/descrizione della collezione (visibile su universaleverything.io e simili). Va eseguita connettendo la UP che risulta <code>owner()</code> del contratto — il contratto stesso rifiuta la transazione se non lo sei (protezione reale on-chain, non solo lato UI).</p>
+
+<div class="row">
+  <button id="btn-connect">Connect UP</button>
+  <span id="status"></span>
+</div>
+
+<div class="row">
+  <label>Icona collezione (quadrata, idealmente ≤800px): </label><br/>
+  <input type="file" id="f-icon" accept="image/*" />
+</div>
+
+<div class="row">
+  <label>Banner collezione (opzionale, es. 1920x600): </label><br/>
+  <input type="file" id="f-banner" accept="image/*" />
+</div>
+
+<div class="row">
+  <button id="btn-set-metadata" disabled>Set collection metadata</button>
+</div>
+
+<div class="log" id="log">Pronto.</div>
+
+<script type="module">
+import { ERC725 } from "https://esm.sh/@erc725/erc725.js@0.28.2";
+
+const logEl = document.getElementById("log");
+function log(msg){ logEl.textContent += "\n" + msg; logEl.scrollTop = logEl.scrollHeight; }
+
+let provider, signer, address, contract;
+
+async function uploadImage(file){
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await fetch("/api/pin-file", { method: "POST", body: formData });
+  if(!res.ok) throw new Error("upload fallito: " + (await res.text()));
+  const data = await res.json();
+  return data.cid;
+}
+
+async function imageEntry(file){
+  const buffer = await file.arrayBuffer();
+  const hash = ethers.keccak256(new Uint8Array(buffer));
+  const bitmap = await createImageBitmap(file);
+  const cid = await uploadImage(file);
+  return {
+    width: bitmap.width,
+    height: bitmap.height,
+    url: `ipfs://${cid}`,
+    verification: { method: "keccak256(bytes)", data: hash }
+  };
+}
+
+document.getElementById("btn-connect").addEventListener("click", async () => {
+  const injected = window.lukso || window.ethereum;
+  if(!injected){ log("Nessuna UP rilevata."); return; }
+
+  provider = new ethers.BrowserProvider(injected);
+  await injected.request({ method: "eth_requestAccounts" });
+  signer = await provider.getSigner();
+  address = await signer.getAddress();
+  const network = await provider.getNetwork();
+  const chainId = Number(network.chainId);
+  const netConfig = NETWORKS[chainId];
+  if(!netConfig){ log("Rete non supportata: " + chainId); return; }
+
+  contract = new ethers.Contract(netConfig.contractAddress, MYCARBOOK_ABI, signer);
+  const owner = await contract.owner();
+
+  document.getElementById("status").textContent = `${address} (rete ${chainId})`;
+  log(`Connesso: ${address}`);
+  log(`Owner contratto: ${owner}`);
+  log(owner.toLowerCase() === address.toLowerCase()
+    ? "✓ Sei l'owner, puoi procedere."
+    : "✗ NON sei l'owner: il setData fallirà on-chain se procedi.");
+
+  document.getElementById("btn-set-metadata").disabled = false;
+});
+
+document.getElementById("btn-set-metadata").addEventListener("click", async () => {
+  try{
+    const iconFile = document.getElementById("f-icon").files[0];
+    const bannerFile = document.getElementById("f-banner").files[0];
+    if(!iconFile){ log("Serve almeno l'icona."); return; }
+
+    log("Upload icona su Pinata...");
+    const icon = await imageEntry(iconFile);
+    log("Icona caricata: " + icon.url);
+
+    let images = [];
+    if(bannerFile){
+      log("Upload banner su Pinata...");
+      const banner = await imageEntry(bannerFile);
+      images = [[banner]];
+      log("Banner caricato: " + banner.url);
+    }
+
+    const metadataJson = {
+      LSP4Metadata: {
+        name: "MyCarBook",
+        description: "On-chain vehicle maintenance logbook on LUKSO. Owners mint their own vehicle and log service history directly from their Universal Profile.",
+        links: [{ title: "Website", url: "https://mycarbook.chainintegrate.it" }],
+        icon: [icon],
+        images,
+        assets: [],
+        attributes: []
+      }
+    };
+
+    log("Upload JSON metadata su Pinata...");
+    const jsonRes = await fetch("/api/pin-json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(metadataJson)
+    });
+    if(!jsonRes.ok) throw new Error("upload JSON fallito");
+    const { cid } = await jsonRes.json();
+    log("JSON caricato: ipfs://" + cid);
+
+    const schema = [{
+      name: "LSP4Metadata",
+      key: LSP4_METADATA_KEY,
+      keyType: "Singleton",
+      valueType: "bytes",
+      valueContent: "VerifiableURI"
+    }];
+    const encoded = ERC725.encodeData([{
+      keyName: "LSP4Metadata",
+      value: { json: metadataJson, url: `ipfs://${cid}` }
+    }], schema);
+
+    log("Invio setData alla UP per la firma...");
+    const tx = await contract.setData(encoded.keys[0], encoded.values[0]);
+    log("Transazione inviata: " + tx.hash);
+    await tx.wait();
+    log("✓ Fatto. Metadata di collezione impostata.");
+  }catch(err){
+    console.error(err);
+    log("✗ Errore: " + (err.message || err));
+  }
+});
+</script>
+
+</body>
+</html>
