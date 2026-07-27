@@ -1,0 +1,30 @@
+{
+  "name": "mycarbook",
+  "version": "1.0.0",
+  "description": "Storico manutenzioni veicolo on-chain su LUKSO. Mint libero (ogni utente minta il proprio veicolo), nessuna cifratura (dato pubblico per natura della chain — coerente con l'uso in fase di rivendita).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChainIntegrate/MyCarBook.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ChainIntegrate/MyCarBook/issues"
+  },
+  "homepage": "https://github.com/ChainIntegrate/MyCarBook#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^17.4.2",
+    "hardhat": "^2.29.0"
+  },
+  "dependencies": {
+    "@lukso/lsp4-contracts": "^0.17.3",
+    "@lukso/lsp8-contracts": "^0.18.1"
+  }
+}
