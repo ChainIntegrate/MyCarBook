@@ -436,13 +436,6 @@
       <p class="field-hint" id="i-desc-count">0 / 280</p>
     </div>
 
-    <div class="field" id="attachment-upload-section">
-      <label for="i-attachment" data-i18n="labelAttachment">Attachment (optional)</label>
-      <input type="file" id="i-attachment" accept="image/*" disabled />
-      <p class="field-hint" data-i18n="hintAttachment">Invoice or service photo.</p>
-      <p class="field-hint warn" id="attachment-locked-hint" data-i18n="hintPhotoLocked">Write to info@chainintegrate.it to enable this feature.</p>
-    </div>
-
     <div id="intervention-confirm" class="confirm-box" hidden></div>
 
     <button class="btn btn-primary" id="btn-intervention-review" data-i18n="reviewBtn">Review and sign</button>
@@ -486,9 +479,6 @@ const I18N = {
     labelPhoto: "Vehicle photo (optional)",
     hintPhoto: "Square image, ideally under 800px per side.",
     hintPhotoLocked: "Write to info@chainintegrate.it to enable this feature.",
-    labelAttachment: "Attachment (optional)",
-    hintAttachment: "Invoice or service photo.",
-    viewAttachment: "View attachment",
     toastPhotoTooBig: "Image too large (max 5MB).",
     toastPhotoUploadFailed: "Photo upload failed, vehicle registered without photo.",
     confirmTitle: "Check before signing",
@@ -564,9 +554,6 @@ const I18N = {
     labelPhoto: "Foto veicolo (opzionale)",
     hintPhoto: "Immagine quadrata, idealmente sotto gli 800px di lato.",
     hintPhotoLocked: "Scrivi a info@chainintegrate.it per abilitare questa funzione.",
-    labelAttachment: "Allegato (opzionale)",
-    hintAttachment: "Fattura o foto dell'intervento.",
-    viewAttachment: "Vedi allegato",
     toastPhotoTooBig: "Immagine troppo grande (max 5MB).",
     toastPhotoUploadFailed: "Upload foto non riuscito, veicolo registrato senza foto.",
     confirmTitle: "Verifica prima di firmare",
@@ -787,8 +774,6 @@ async function checkPhotoAccess(){
   }
   $("f-photo").disabled = !state.canUploadPhoto;
   $("photo-locked-hint").hidden = state.canUploadPhoto;
-  $("i-attachment").disabled = !state.canUploadPhoto;
-  $("attachment-locked-hint").hidden = state.canUploadPhoto;
 }
 
 async function loadVehicles(){
@@ -1059,37 +1044,6 @@ async function uploadVehiclePhotoIfProvided(){
   }
 }
 
-// Gemella di uploadVehiclePhotoIfProvided ma per l'allegato di un intervento
-// (fattura/foto): stesso gate (canUploadPhoto), stesso endpoint di upload,
-// ma ritorna solo hash+url (l'evento on-chain non ha bisogno di width/height).
-async function uploadAttachmentIfProvided(){
-  const fileInput = $("i-attachment");
-  if(!state.canUploadPhoto || !fileInput.files || fileInput.files.length === 0) return null;
-
-  const file = fileInput.files[0];
-  if(file.size > 5 * 1024 * 1024){
-    showToast(t("toastPhotoTooBig"), true);
-    return null;
-  }
-
-  try{
-    const buffer = await file.arrayBuffer();
-    const hash = ethers.keccak256(new Uint8Array(buffer));
-
-    const formData = new FormData();
-    formData.append("image", file);
-    const res = await fetch("/api/pin-file", { method: "POST", body: formData });
-    if(!res.ok) throw new Error("upload allegato fallito");
-    const data = await res.json();
-
-    return { hash, url: `ipfs://${data.cid}` };
-  }catch(err){
-    console.warn("Upload allegato non riuscito:", err);
-    showToast(t("toastPhotoUploadFailed"), true);
-    return null;
-  }
-}
-
 function clearMintForm(){
   ["f-name","f-brand","f-model","f-trim","f-plate","f-vin","f-reg-date","f-purchase-date","f-km"]
     .forEach(id => $(id).value = "");
@@ -1159,10 +1113,6 @@ async function loadInterventions(tokenId){
     for(const ev of sorted){
       const stamp = timestampToStampParts(ev.date);
       const amountLabel = centsToEuroLabel(ev.amountCents);
-      const hasAttachment = ev.attachmentURI && ev.attachmentURI.length > 0;
-      const attachmentLink = hasAttachment
-        ? `<a href="${resolveIpfsUrl(ev.attachmentURI)}" target="_blank" rel="noopener" style="color:var(--brass);">📎 ${t("viewAttachment")}</a>`
-        : "";
 
       const entry = document.createElement("div");
       entry.className = "stamp-entry";
@@ -1175,7 +1125,6 @@ async function loadInterventions(tokenId){
           <div class="meta">
             <span>${Number(ev.km).toLocaleString(localeCode())} km</span>
             ${amountLabel ? `<span>${amountLabel}</span>` : ""}
-            ${attachmentLink}
           </div>
         </div>
       `;
@@ -1246,16 +1195,12 @@ async function submitIntervention(data, confirmBtn){
   }
 
   try{
-    const attachment = await uploadAttachmentIfProvided();
-
     const tx = await state.contract.logIntervention(
       state.currentTokenId,
       dateToTimestamp(data.date),
       BigInt(data.km),
       BigInt(eurosToCents(data.amount)),
-      data.desc,
-      attachment ? attachment.hash : ethers.ZeroHash,
-      attachment ? attachment.url : ""
+      data.desc
     );
     showToast(t("toastTxSent"));
     await tx.wait();
@@ -1282,7 +1227,6 @@ async function submitIntervention(data, confirmBtn){
 
 function clearInterventionForm(){
   ["i-date","i-km","i-amount","i-desc"].forEach(id => $(id).value = "");
-  $("i-attachment").value = "";
   $("i-desc-count").textContent = `0 / ${MAX_DESCRIPTION_LENGTH}`;
   $("intervention-confirm").hidden = true;
 }
