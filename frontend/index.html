@@ -10,20 +10,18 @@
 <meta property="og:site_name" content="MyCarBook" />
 <meta property="og:title" content="MyCarBook — On-chain vehicle logbook" />
 <meta property="og:description" content="Log every service on your vehicle, on-chain, straight from your Universal Profile. No issuer, no backend — you own the record." />
-<meta property="og:image" content="https://mycarbook.chainintegrate.it/mycarbook_banner_1920x600.png" />
+<meta property="og:image" content="https://mycarbook.chainintegrate.it/banner.png" />
 <meta property="og:url" content="https://mycarbook.chainintegrate.it" />
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="MyCarBook — On-chain vehicle logbook" />
 <meta name="twitter:description" content="Log every service on your vehicle, on-chain, straight from your Universal Profile." />
-<meta name="twitter:image" content="https://mycarbook.chainintegrate.it/mycarbook_banner_1920x600.png" />
+<meta name="twitter:image" content="https://mycarbook.chainintegrate.it/banner.png" />
 
 <meta name="theme-color" content="#10181A" />
 
 <link rel="icon" href="favicon.ico" sizes="any" />
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple_touch_icon.png" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -92,14 +90,15 @@
   .wordmark-icon{ height:32px; width:32px; border-radius:8px; display:block; }
 
   .powered-by-strip{
-    display:flex; align-items:center; justify-content:center; gap:0.4rem;
-    padding:0.45rem 0;
-    font-family:var(--mono); font-size:0.68rem; letter-spacing:0.04em;
-    color:var(--ink-muted);
-    background:var(--surface);
-    border-bottom:1px solid var(--line);
-  }
-  .powered-by-icon{ height:18px; width:18px; border-radius:50%; object-fit:cover; display:block; }
+  display:flex; align-items:center; justify-content:center; gap:0.6rem;
+  padding:0.75rem 0;
+  font-family:var(--mono); font-size:0.85rem; letter-spacing:0.04em;
+  color:var(--ink-muted);
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+}
+.powered-by-icon{ height:56px; width:56px; border-radius:50%; object-fit:cover; display:block; }
+
 
   .header-actions{ display:flex; align-items:center; gap:0.5rem; }
 
@@ -296,7 +295,7 @@
 
 <header>
   <div class="wordmark">
-    <img src="mycarbook-logo.png" alt="" class="wordmark-icon" />
+    <img src="logo.png" alt="" class="wordmark-icon" />
     My<span>Car</span>Book
   </div>
   <div class="header-actions">
@@ -308,7 +307,6 @@
 <div class="powered-by-strip">
   <span data-i18n="poweredBy">Powered by</span>
   <img src="Lukso_400x400.jpg" alt="LUKSO" class="powered-by-icon" />
-  <span>LUKSO</span>
 </div>
 
 <main>
@@ -438,6 +436,13 @@
       <p class="field-hint" id="i-desc-count">0 / 280</p>
     </div>
 
+    <div class="field" id="attachment-upload-section">
+      <label for="i-attachment" data-i18n="labelAttachment">Attachment (optional)</label>
+      <input type="file" id="i-attachment" accept="image/*" disabled />
+      <p class="field-hint" data-i18n="hintAttachment">Invoice or service photo.</p>
+      <p class="field-hint warn" id="attachment-locked-hint" data-i18n="hintPhotoLocked">Write to info@chainintegrate.it to enable this feature.</p>
+    </div>
+
     <div id="intervention-confirm" class="confirm-box" hidden></div>
 
     <button class="btn btn-primary" id="btn-intervention-review" data-i18n="reviewBtn">Review and sign</button>
@@ -481,6 +486,9 @@ const I18N = {
     labelPhoto: "Vehicle photo (optional)",
     hintPhoto: "Square image, ideally under 800px per side.",
     hintPhotoLocked: "Write to info@chainintegrate.it to enable this feature.",
+    labelAttachment: "Attachment (optional)",
+    hintAttachment: "Invoice or service photo.",
+    viewAttachment: "View attachment",
     toastPhotoTooBig: "Image too large (max 5MB).",
     toastPhotoUploadFailed: "Photo upload failed, vehicle registered without photo.",
     confirmTitle: "Check before signing",
@@ -556,6 +564,9 @@ const I18N = {
     labelPhoto: "Foto veicolo (opzionale)",
     hintPhoto: "Immagine quadrata, idealmente sotto gli 800px di lato.",
     hintPhotoLocked: "Scrivi a info@chainintegrate.it per abilitare questa funzione.",
+    labelAttachment: "Allegato (opzionale)",
+    hintAttachment: "Fattura o foto dell'intervento.",
+    viewAttachment: "Vedi allegato",
     toastPhotoTooBig: "Immagine troppo grande (max 5MB).",
     toastPhotoUploadFailed: "Upload foto non riuscito, veicolo registrato senza foto.",
     confirmTitle: "Verifica prima di firmare",
@@ -776,6 +787,8 @@ async function checkPhotoAccess(){
   }
   $("f-photo").disabled = !state.canUploadPhoto;
   $("photo-locked-hint").hidden = state.canUploadPhoto;
+  $("i-attachment").disabled = !state.canUploadPhoto;
+  $("attachment-locked-hint").hidden = state.canUploadPhoto;
 }
 
 async function loadVehicles(){
@@ -1046,6 +1059,37 @@ async function uploadVehiclePhotoIfProvided(){
   }
 }
 
+// Gemella di uploadVehiclePhotoIfProvided ma per l'allegato di un intervento
+// (fattura/foto): stesso gate (canUploadPhoto), stesso endpoint di upload,
+// ma ritorna solo hash+url (l'evento on-chain non ha bisogno di width/height).
+async function uploadAttachmentIfProvided(){
+  const fileInput = $("i-attachment");
+  if(!state.canUploadPhoto || !fileInput.files || fileInput.files.length === 0) return null;
+
+  const file = fileInput.files[0];
+  if(file.size > 5 * 1024 * 1024){
+    showToast(t("toastPhotoTooBig"), true);
+    return null;
+  }
+
+  try{
+    const buffer = await file.arrayBuffer();
+    const hash = ethers.keccak256(new Uint8Array(buffer));
+
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch("/api/pin-file", { method: "POST", body: formData });
+    if(!res.ok) throw new Error("upload allegato fallito");
+    const data = await res.json();
+
+    return { hash, url: `ipfs://${data.cid}` };
+  }catch(err){
+    console.warn("Upload allegato non riuscito:", err);
+    showToast(t("toastPhotoUploadFailed"), true);
+    return null;
+  }
+}
+
 function clearMintForm(){
   ["f-name","f-brand","f-model","f-trim","f-plate","f-vin","f-reg-date","f-purchase-date","f-km"]
     .forEach(id => $(id).value = "");
@@ -1115,6 +1159,10 @@ async function loadInterventions(tokenId){
     for(const ev of sorted){
       const stamp = timestampToStampParts(ev.date);
       const amountLabel = centsToEuroLabel(ev.amountCents);
+      const hasAttachment = ev.attachmentURI && ev.attachmentURI.length > 0;
+      const attachmentLink = hasAttachment
+        ? `<a href="${resolveIpfsUrl(ev.attachmentURI)}" target="_blank" rel="noopener" style="color:var(--brass);">📎 ${t("viewAttachment")}</a>`
+        : "";
 
       const entry = document.createElement("div");
       entry.className = "stamp-entry";
@@ -1127,6 +1175,7 @@ async function loadInterventions(tokenId){
           <div class="meta">
             <span>${Number(ev.km).toLocaleString(localeCode())} km</span>
             ${amountLabel ? `<span>${amountLabel}</span>` : ""}
+            ${attachmentLink}
           </div>
         </div>
       `;
@@ -1197,12 +1246,16 @@ async function submitIntervention(data, confirmBtn){
   }
 
   try{
+    const attachment = await uploadAttachmentIfProvided();
+
     const tx = await state.contract.logIntervention(
       state.currentTokenId,
       dateToTimestamp(data.date),
       BigInt(data.km),
       BigInt(eurosToCents(data.amount)),
-      data.desc
+      data.desc,
+      attachment ? attachment.hash : ethers.ZeroHash,
+      attachment ? attachment.url : ""
     );
     showToast(t("toastTxSent"));
     await tx.wait();
@@ -1229,6 +1282,7 @@ async function submitIntervention(data, confirmBtn){
 
 function clearInterventionForm(){
   ["i-date","i-km","i-amount","i-desc"].forEach(id => $(id).value = "");
+  $("i-attachment").value = "";
   $("i-desc-count").textContent = `0 / ${MAX_DESCRIPTION_LENGTH}`;
   $("intervention-confirm").hidden = true;
 }

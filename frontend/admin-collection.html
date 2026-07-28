@@ -41,6 +41,25 @@
   <button id="btn-set-metadata" disabled>Set collection metadata</button>
 </div>
 
+<hr style="border-color:#2C3D40; margin:2rem 0;" />
+
+<h1>Set image for a specific vehicle (tokenId)</h1>
+<p>Aggiorna solo <code>icon</code>/<code>images</code> del tokenId indicato, mantenendo intatti nome/attributes esistenti (non sovrascrive tutto il JSON). Stessa protezione on-chain: solo l'owner del contratto può chiamare <code>setDataForTokenId</code> esternamente.</p>
+
+<div class="row">
+  <label>Token ID (numero, es. 1, 2, 3...): </label><br/>
+  <input type="number" id="f-token-id" min="1" step="1" style="padding:0.4rem; width:120px;" />
+</div>
+
+<div class="row">
+  <label>Immagine veicolo (quadrata, idealmente ≤800px): </label><br/>
+  <input type="file" id="f-vehicle-image" accept="image/*" />
+</div>
+
+<div class="row">
+  <button id="btn-set-vehicle-image" disabled>Set vehicle image</button>
+</div>
+
 <div class="log" id="log">Pronto.</div>
 
 <script type="module">
@@ -97,7 +116,16 @@ document.getElementById("btn-connect").addEventListener("click", async () => {
     : "✗ NON sei l'owner: il setData fallirà on-chain se procedi.");
 
   document.getElementById("btn-set-metadata").disabled = false;
+  document.getElementById("btn-set-vehicle-image").disabled = false;
 });
+
+const schema = [{
+  name: "LSP4Metadata",
+  key: LSP4_METADATA_KEY,
+  keyType: "Singleton",
+  valueType: "bytes",
+  valueContent: "VerifiableURI"
+}];
 
 document.getElementById("btn-set-metadata").addEventListener("click", async () => {
   try{
@@ -139,13 +167,6 @@ document.getElementById("btn-set-metadata").addEventListener("click", async () =
     const { cid } = await jsonRes.json();
     log("JSON caricato: ipfs://" + cid);
 
-    const schema = [{
-      name: "LSP4Metadata",
-      key: LSP4_METADATA_KEY,
-      keyType: "Singleton",
-      valueType: "bytes",
-      valueContent: "VerifiableURI"
-    }];
     const encoded = ERC725.encodeData([{
       keyName: "LSP4Metadata",
       value: { json: metadataJson, url: `ipfs://${cid}` }
@@ -156,6 +177,81 @@ document.getElementById("btn-set-metadata").addEventListener("click", async () =
     log("Transazione inviata: " + tx.hash);
     await tx.wait();
     log("✓ Fatto. Metadata di collezione impostata.");
+  }catch(err){
+    console.error(err);
+    log("✗ Errore: " + (err.message || err));
+  }
+});
+
+async function fetchIpfsJson(ipfsUrl){
+  const cidPath = ipfsUrl.replace("ipfs://", "");
+  const gateways = [
+    `https://peach-familiar-wombat-848.mypinata.cloud/ipfs/${cidPath}`,
+    `https://api.universalprofile.cloud/ipfs/${cidPath}`
+  ];
+  for(const url of gateways){
+    try{
+      const res = await fetch(url);
+      if(res.ok) return await res.json();
+    }catch(e){ /* prova il successivo */ }
+  }
+  throw new Error("Nessun gateway IPFS ha risposto per " + ipfsUrl);
+}
+
+document.getElementById("btn-set-vehicle-image").addEventListener("click", async () => {
+  try{
+    const tokenIdNum = document.getElementById("f-token-id").value;
+    const imageFile = document.getElementById("f-vehicle-image").files[0];
+    if(!tokenIdNum){ log("Inserisci un token ID."); return; }
+    if(!imageFile){ log("Serve un'immagine."); return; }
+
+    const tokenIdHex = ethers.zeroPadValue(ethers.toBeHex(BigInt(tokenIdNum)), 32);
+    log(`Token ID ${tokenIdNum} -> ${tokenIdHex}`);
+
+    log("Leggo il metadata attuale del veicolo...");
+    const currentBytes = await contract.getDataForTokenId(tokenIdHex, LSP4_METADATA_KEY);
+    if(!currentBytes || currentBytes === "0x"){
+      throw new Error("Nessun metadata esistente per questo tokenId — verifica che il veicolo sia stato mintato.");
+    }
+    const decoded = ERC725.decodeData([{ keyName: "LSP4Metadata", value: currentBytes }], schema);
+    const currentJson = await fetchIpfsJson(decoded[0].value.url);
+    log("Metadata attuale: " + (currentJson.LSP4Metadata?.name || "(senza nome)"));
+
+    log("Upload nuova immagine su Pinata...");
+    const icon = await imageEntry(imageFile);
+    log("Immagine caricata: " + icon.url);
+
+    // Merge: mantengo name/attributes/description esistenti, sostituisco
+    // solo icon/images — setDataForTokenId sovrascrive l'intero JSON, quindi
+    // senza questo merge perderemmo marca/modello/targa/VIN già scritti.
+    const mergedJson = {
+      LSP4Metadata: {
+        ...currentJson.LSP4Metadata,
+        icon: [icon],
+        images: [[icon]]
+      }
+    };
+
+    log("Upload JSON aggiornato su Pinata...");
+    const jsonRes = await fetch("/api/pin-json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mergedJson)
+    });
+    if(!jsonRes.ok) throw new Error("upload JSON fallito");
+    const { cid } = await jsonRes.json();
+    log("JSON caricato: ipfs://" + cid);
+
+    const encoded = ERC725.encodeData([{
+      keyName: "LSP4Metadata",
+      value: { json: mergedJson, url: `ipfs://${cid}` }
+    }], schema);
+
+    log("Invio setDataForTokenId alla UP per la firma...");
+    const tx = await contract.setDataForTokenId(tokenIdHex, encoded.keys[0], encoded.values[0]);
+    log("Transazione inviata: " + tx.hash);
+    await tx.wait();
+    log("✓ Fatto. Immagine del veicolo aggiornata.");
   }catch(err){
     console.error(err);
     log("✗ Errore: " + (err.message || err));
