@@ -35,3 +35,17 @@ const LSP4_METADATA_KEY =
   "0x9afb95cacc9f95858ec44aa8c3b685511002e30ae54415823f406128b85b238e";
 
 const MAX_DESCRIPTION_LENGTH = 280;
+
+// ChainIntegrate Membership — usato per sbloccare la foto veicolo a chi
+// possiede almeno il tier Bronze, in alternativa (non in sostituzione)
+// alla lista manuale allowed-addresses.json sul backend.
+const MEMBERSHIP_ADDRESSES = {
+  4201: "0x01D0930B375d037FA988b02871812D291cC0131D",
+  42:   "0x0000000000000000000000000000000000000000" // TODO dopo deploy mainnet membership
+};
+
+const MEMBERSHIP_ABI = [
+  "function tierOf(address member) external view returns (uint8)"
+];
+
+const TIER_BRONZE = 1;
