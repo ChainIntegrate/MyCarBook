@@ -436,6 +436,26 @@
       <p class="field-hint" id="i-desc-count">0 / 280</p>
     </div>
 
+    <div class="field" id="category-section">
+      <label data-i18n="labelCategories">Category (optional, multiple allowed)</label>
+      <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.4rem;">
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="1" disabled /> <span data-i18n="catMechanical">Mechanical</span></label>
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="2" disabled /> <span data-i18n="catBodywork">Bodywork</span></label>
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="4" disabled /> <span data-i18n="catTires">Tires</span></label>
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="8" disabled /> <span data-i18n="catElectrical">Electrical</span></label>
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="16" disabled /> <span data-i18n="catCleaning">Cleaning</span></label>
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="32" disabled /> <span data-i18n="catOther">Other</span></label>
+      </div>
+      <p class="field-hint warn" id="category-locked-hint" data-i18n="hintCategoryLocked">Requires Silver membership or above.</p>
+    </div>
+
+    <div class="field" id="document-upload-section">
+      <label for="f-document" data-i18n="labelDocument">Document (optional)</label>
+      <input type="file" id="f-document" accept="image/*,application/pdf" disabled />
+      <p class="field-hint" data-i18n="hintDocument">Invoice or other service document.</p>
+      <p class="field-hint warn" id="document-locked-hint" data-i18n="hintDocumentLocked">Requires Gold membership.</p>
+    </div>
+
     <div id="intervention-confirm" class="confirm-box" hidden></div>
 
     <button class="btn btn-primary" id="btn-intervention-review" data-i18n="reviewBtn">Review and sign</button>
@@ -479,6 +499,21 @@ const I18N = {
     labelPhoto: "Vehicle photo (optional)",
     hintPhoto: "Square image, ideally under 800px per side.",
     hintPhotoLocked: "Requires a ChainIntegrate membership (Bronze or above), or write to info@chainintegrate.it.",
+    labelCategories: "Category (optional, multiple allowed)",
+    catMechanical: "Mechanical",
+    catBodywork: "Bodywork",
+    catTires: "Tires",
+    catElectrical: "Electrical",
+    catCleaning: "Cleaning",
+    catOther: "Other",
+    hintCategoryLocked: "Requires Silver membership or above.",
+    labelDocument: "Document (optional)",
+    hintDocument: "Invoice or other service document.",
+    hintDocumentLocked: "Requires Gold membership.",
+    rowCategories: "Categories",
+    rowDocument: "Document",
+    viewDocument: "View document",
+    toastDescTooLongWithDoc: "Description too long once the document link is added — shorten it.",
     toastPhotoTooBig: "Image too large (max 5MB).",
     toastPhotoUploadFailed: "Photo upload failed, vehicle registered without photo.",
     confirmTitle: "Check before signing",
@@ -554,6 +589,21 @@ const I18N = {
     labelPhoto: "Foto veicolo (opzionale)",
     hintPhoto: "Immagine quadrata, idealmente sotto gli 800px di lato.",
     hintPhotoLocked: "Richiede una membership ChainIntegrate (Bronze o superiore), oppure scrivi a info@chainintegrate.it.",
+    labelCategories: "Categoria (opzionale, selezione multipla)",
+    catMechanical: "Meccanica",
+    catBodywork: "Carrozzeria",
+    catTires: "Gomme",
+    catElectrical: "Elettrico",
+    catCleaning: "Pulizia",
+    catOther: "Altro",
+    hintCategoryLocked: "Richiede membership Silver o superiore.",
+    labelDocument: "Documento (opzionale)",
+    hintDocument: "Fattura o altro documento dell'intervento.",
+    hintDocumentLocked: "Richiede membership Gold.",
+    rowCategories: "Categorie",
+    rowDocument: "Documento",
+    viewDocument: "Vedi documento",
+    toastDescTooLongWithDoc: "Descrizione troppo lunga una volta aggiunto il link al documento — accorciala.",
     toastPhotoTooBig: "Immagine troppo grande (max 5MB).",
     toastPhotoUploadFailed: "Upload foto non riuscito, veicolo registrato senza foto.",
     confirmTitle: "Verifica prima di firmare",
@@ -621,6 +671,9 @@ const state = {
   currentTokenId: null,
   lang: detectInitialLang(),
   canUploadPhoto: false,
+  membershipTier: 0,
+  canUseCategories: false,
+  canUploadDocument: false,
 };
 
 function t(key, vars){
@@ -749,7 +802,7 @@ async function connectWallet(){
     $("list-not-connected").hidden = true;
     $("btn-new-vehicle").hidden = false;
 
-    await checkPhotoAccess();
+    await checkMembershipAccess();
     await loadVehicles();
   }catch(err){
     console.error(err);
@@ -763,9 +816,13 @@ $("btn-connect").addEventListener("click", connectWallet);
 // backend/allowed-addresses.json vedono il bottone di upload foto al mint.
 // Non è un confine di sicurezza (chiunque potrebbe scrivere metadata
 // direttamente dalla propria UP), è solo un rollout controllato della feature.
-async function checkPhotoAccess(){
+// Legge il tier membership (0 = nessuna) e deriva i tre permessi
+// gerarchici: Bronze -> foto, Silver -> + categorie, Gold -> + documenti.
+// La lista manuale allowed-addresses.json resta valida SOLO per la foto
+// (comportamento storico), non sblocca categorie/documenti.
+async function checkMembershipAccess(){
   let allowedByList = false;
-  let hasMembership = false;
+  let tier = 0;
 
   try{
     const res = await fetch(`/api/photo-access/${state.address}`);
@@ -779,16 +836,25 @@ async function checkPhotoAccess(){
     const membershipAddress = MEMBERSHIP_ADDRESSES[state.chainId];
     if(membershipAddress && membershipAddress !== "0x0000000000000000000000000000000000000000"){
       const membershipContract = new ethers.Contract(membershipAddress, MEMBERSHIP_ABI, state.provider);
-      const tier = await membershipContract.tierOf(state.address);
-      hasMembership = Number(tier) >= TIER_BRONZE;
+      tier = Number(await membershipContract.tierOf(state.address));
     }
   }catch(err){
     console.warn("Controllo membership non riuscito, la considero negativa:", err);
   }
 
-  state.canUploadPhoto = allowedByList || hasMembership;
+  state.membershipTier = tier;
+  state.canUploadPhoto = allowedByList || tier >= TIER_BRONZE;
+  state.canUseCategories = tier >= TIER_SILVER;
+  state.canUploadDocument = tier >= TIER_GOLD;
+
   $("f-photo").disabled = !state.canUploadPhoto;
   $("photo-locked-hint").hidden = state.canUploadPhoto;
+
+  document.querySelectorAll(".i-category").forEach(el => el.disabled = !state.canUseCategories);
+  $("category-locked-hint").hidden = state.canUseCategories;
+
+  $("f-document").disabled = !state.canUploadDocument;
+  $("document-locked-hint").hidden = state.canUploadDocument;
 }
 
 async function loadVehicles(){
@@ -1059,6 +1125,34 @@ async function uploadVehiclePhotoIfProvided(){
   }
 }
 
+// Documento allegato all'intervento (fattura, ecc.) — SOLO comodità, niente
+// hash/certificazione (deciso: "non ha senso, troppo certificato"). Nessun
+// campo dedicato nel contratto: il link viene agganciato in coda alla
+// description con un marcatore che la UI riconosce in lettura.
+async function uploadDocumentIfProvided(){
+  const fileInput = $("f-document");
+  if(!state.canUploadDocument || !fileInput.files || fileInput.files.length === 0) return null;
+
+  const file = fileInput.files[0];
+  if(file.size > 5 * 1024 * 1024){
+    showToast(t("toastPhotoTooBig"), true);
+    return null;
+  }
+
+  try{
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch("/api/pin-file", { method: "POST", body: formData });
+    if(!res.ok) throw new Error("upload documento fallito");
+    const data = await res.json();
+    return `ipfs://${data.cid}`;
+  }catch(err){
+    console.warn("Upload documento non riuscito:", err);
+    showToast(t("toastPhotoUploadFailed"), true);
+    return null;
+  }
+}
+
 function clearMintForm(){
   ["f-name","f-brand","f-model","f-trim","f-plate","f-vin","f-reg-date","f-purchase-date","f-km"]
     .forEach(id => $(id).value = "");
@@ -1129,6 +1223,21 @@ async function loadInterventions(tokenId){
       const stamp = timestampToStampParts(ev.date);
       const amountLabel = centsToEuroLabel(ev.amountCents);
 
+      // Il link al documento (se presente) è agganciato in coda alla
+      // description con un marcatore [doc:ipfs://...] — lo separiamo qui
+      // per mostrarlo come link invece che come testo grezzo.
+      const docMatch = ev.description.match(/\s*\[doc:(ipfs:\/\/[^\]]+)\]\s*$/);
+      const cleanDesc = docMatch ? ev.description.slice(0, docMatch.index) : ev.description;
+      const docLink = docMatch
+        ? `<a href="${resolveIpfsUrl(docMatch[1])}" target="_blank" rel="noopener" style="color:var(--brass);">📎 ${t("viewDocument")}</a>`
+        : "";
+
+      const categoryLabels = {1:t("catMechanical"),2:t("catBodywork"),4:t("catTires"),8:t("catElectrical"),16:t("catCleaning"),32:t("catOther")};
+      const categoryTags = Object.keys(categoryLabels)
+        .filter(v => Number(ev.categoryFlags) & Number(v))
+        .map(v => `<span class="attr-pill">${categoryLabels[v]}</span>`)
+        .join("");
+
       const entry = document.createElement("div");
       entry.className = "stamp-entry";
       entry.innerHTML = `
@@ -1136,10 +1245,12 @@ async function loadInterventions(tokenId){
           <div class="d">${stamp.day}<br/>${stamp.month}</div>
         </div>
         <div class="stamp-card">
-          <div class="desc">${escapeHtml(ev.description)}</div>
+          <div class="desc">${escapeHtml(cleanDesc)}</div>
+          ${categoryTags ? `<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">${categoryTags}</div>` : ""}
           <div class="meta">
             <span>${Number(ev.km).toLocaleString(localeCode())} km</span>
             ${amountLabel ? `<span>${amountLabel}</span>` : ""}
+            ${docLink}
           </div>
         </div>
       `;
@@ -1182,6 +1293,16 @@ $("btn-intervention-review").addEventListener("click", () => {
     return;
   }
 
+  const categoryFlags = state.canUseCategories
+    ? Array.from(document.querySelectorAll(".i-category:checked")).reduce((sum, el) => sum + Number(el.value), 0)
+    : 0;
+  const categoryLabels = {1:"Mechanical",2:"Bodywork",4:"Tires",8:"Electrical",16:"Cleaning",32:"Other"};
+  const selectedCategoryNames = Object.keys(categoryLabels)
+    .filter(v => categoryFlags & Number(v))
+    .map(v => categoryLabels[v]);
+
+  const documentFile = $("f-document").files[0];
+
   const box = $("intervention-confirm");
   box.hidden = false;
   box.innerHTML = `
@@ -1190,13 +1311,15 @@ $("btn-intervention-review").addEventListener("click", () => {
     <div class="confirm-row"><span class="k">${t("rowKmIntervention")}</span><span>${Number(km).toLocaleString(localeCode())}</span></div>
     <div class="confirm-row"><span class="k">${t("rowAmount")}</span><span>${amount ? centsToEuroLabel(eurosToCents(amount)) : t("amountNotSpecified")}</span></div>
     <div class="confirm-row"><span class="k">${t("rowDesc")}</span><span>${escapeHtml(desc)}</span></div>
+    ${selectedCategoryNames.length ? `<div class="confirm-row"><span class="k">${t("rowCategories")}</span><span>${selectedCategoryNames.join(", ")}</span></div>` : ""}
+    ${documentFile ? `<div class="confirm-row"><span class="k">${t("rowDocument")}</span><span>${escapeHtml(documentFile.name)}</span></div>` : ""}
   `;
 
   const confirmBtn = document.createElement("button");
   confirmBtn.className = "btn btn-primary";
   confirmBtn.style.marginTop = "0.75rem";
   confirmBtn.textContent = t("confirmSignBtn");
-  confirmBtn.addEventListener("click", (e) => submitIntervention({ date, km, amount, desc }, e.currentTarget));
+  confirmBtn.addEventListener("click", (e) => submitIntervention({ date, km, amount, desc, categoryFlags }, e.currentTarget));
   box.appendChild(confirmBtn);
 
   box.scrollIntoView({ behavior:"smooth" });
@@ -1210,12 +1333,25 @@ async function submitIntervention(data, confirmBtn){
   }
 
   try{
+    const documentUri = await uploadDocumentIfProvided();
+    let finalDesc = data.desc;
+    if(documentUri){
+      const marker = ` [doc:${documentUri}]`;
+      if((finalDesc + marker).length > MAX_DESCRIPTION_LENGTH){
+        showToast(t("toastDescTooLongWithDoc"), true);
+        if(confirmBtn){ confirmBtn.disabled = false; confirmBtn.textContent = originalBtnText; }
+        return;
+      }
+      finalDesc = finalDesc + marker;
+    }
+
     const tx = await state.contract.logIntervention(
       state.currentTokenId,
       dateToTimestamp(data.date),
       BigInt(data.km),
+      Number(data.categoryFlags) || 0,
       BigInt(eurosToCents(data.amount)),
-      data.desc
+      finalDesc
     );
     showToast(t("toastTxSent"));
     await tx.wait();
@@ -1242,6 +1378,8 @@ async function submitIntervention(data, confirmBtn){
 
 function clearInterventionForm(){
   ["i-date","i-km","i-amount","i-desc"].forEach(id => $(id).value = "");
+  document.querySelectorAll(".i-category").forEach(el => el.checked = false);
+  $("f-document").value = "";
   $("i-desc-count").textContent = `0 / ${MAX_DESCRIPTION_LENGTH}`;
   $("intervention-confirm").hidden = true;
 }
