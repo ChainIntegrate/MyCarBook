@@ -710,7 +710,20 @@ function setLang(lang){
   localStorage.setItem("mcb_lang", lang);
   applyStaticTranslations();
   if(state.vehicles && state.vehicles.length) renderVehicleList();
-  if(state.currentTokenId) loadInterventions(state.currentTokenId);
+  if(state.currentTokenId){
+    loadInterventions(state.currentTokenId);
+    const v = state.vehicles.find(x => x.tokenId === state.currentTokenId);
+    if(v){
+      const attrsEl = $("detail-attrs");
+      attrsEl.innerHTML = "";
+      for(const a of v.attributes){
+        const pill = document.createElement("span");
+        pill.className = "attr-pill";
+        pill.textContent = `${translateAttributeKey(a.key)}: ${a.value}`;
+        attrsEl.appendChild(pill);
+      }
+    }
+  }
 }
 
 $("btn-lang").addEventListener("click", () => {
@@ -955,6 +968,21 @@ function renderVehicleList(){
   }
 }
 
+// Le attributes (Brand/Model/Trim/Plate/VIN) sono salvate on-chain in
+// inglese, sempre — solo la UI le traduce a video in base alla lingua
+// attiva. Chiavi non riconosciute (attributes future/custom) restano
+// mostrate così come sono salvate.
+function translateAttributeKey(key){
+  const map = {
+    Brand: "labelBrand",
+    Model: "labelModel",
+    Trim: "labelTrim",
+    Plate: "labelPlate",
+    VIN: "labelVin"
+  };
+  return map[key] ? t(map[key]) : key;
+}
+
 function escapeHtml(str){
   const div = document.createElement("div");
   div.textContent = str || "";
@@ -1197,7 +1225,7 @@ async function openVehicleDetail(tokenId){
   for(const a of v.attributes){
     const pill = document.createElement("span");
     pill.className = "attr-pill";
-    pill.textContent = `${a.key}: ${a.value}`;
+    pill.textContent = `${translateAttributeKey(a.key)}: ${a.value}`;
     attrsEl.appendChild(pill);
   }
 
