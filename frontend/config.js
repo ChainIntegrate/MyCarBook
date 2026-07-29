@@ -6,7 +6,7 @@ const NETWORKS = {
     name: "LUKSO Testnet",
     rpcUrl: "https://rpc.testnet.lukso.network",
     explorer: "https://explorer.execution.testnet.lukso.network",
-    contractAddress: "0x9269184AcDb222e6228e6c1fb603b3811f595497" // TODO dopo deploy testnet
+    contractAddress: "0xcf1e38bB8aB96B5b0100Af55dC7E7eF9D2e2DE60" // TODO dopo deploy testnet
   },
   42: {
     name: "LUKSO Mainnet",

@@ -15,7 +15,7 @@ import {_LSP4_TOKEN_TYPE_NFT, _LSP4_METADATA_KEY} from "@lukso/lsp4-contracts/co
  *         Nessun issuer terzo, nessuna cifratura (dato pubblico per natura
  *         della chain, coerente con l'uso in fase di rivendita).
  */
-contract MyCarBook is LSP8IdentifiableDigitalAsset {
+contract MyCarBookV2 is LSP8IdentifiableDigitalAsset {
     uint256 private _nextTokenId = 1;
 
     uint256 public constant MAX_DESCRIPTION_LENGTH = 280;
