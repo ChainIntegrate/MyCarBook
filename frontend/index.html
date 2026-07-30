@@ -1324,7 +1324,7 @@ $("btn-intervention-review").addEventListener("click", () => {
   const categoryFlags = state.canUseCategories
     ? Array.from(document.querySelectorAll(".i-category:checked")).reduce((sum, el) => sum + Number(el.value), 0)
     : 0;
-  const categoryLabels = {1:"Mechanical",2:"Bodywork",4:"Tires",8:"Electrical",16:"Cleaning",32:"Other"};
+  const categoryLabels = {1:t("catMechanical"),2:t("catBodywork"),4:t("catTires"),8:t("catElectrical"),16:t("catCleaning"),32:t("catOther")};
   const selectedCategoryNames = Object.keys(categoryLabels)
     .filter(v => categoryFlags & Number(v))
     .map(v => categoryLabels[v]);
