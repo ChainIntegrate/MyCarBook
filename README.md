@@ -4,13 +4,15 @@ Storico manutenzioni veicolo on-chain su LUKSO. Mint libero (ogni utente
 minta il proprio veicolo), nessuna cifratura (dato pubblico per natura della
 chain — coerente con l'uso in fase di rivendita).
 
+**Live**: https://mycarbook.chainintegrate.it
+
 ## Struttura
 
 ```
 mycarbook/
 ├── contracts/
-│   ├── MyCarBook.sol      — v1, DEPLOYATO su testnet e in uso, non toccare
-│   └── MyCarBookV2.sol    — v2, DEPLOYATO su testnet (non ancora su mainnet)
+│   ├── MyCarBook.sol      — v1, storico, non più in uso dal frontend
+│   └── MyCarBookV2.sol    — v2, DEPLOYATO e IN USO su testnet e mainnet
 ├── scripts/
 │   ├── deploy.js           — deploy v1
 │   └── deploy-v2.js        — deploy v2
@@ -28,65 +30,77 @@ mycarbook/
 
 ## Stato attuale
 
-- **v1** (`MyCarBook.sol`): deployato su testnet, indirizzo in
-  `frontend/config.js`. È il contratto realmente in uso dal frontend oggi.
-- **v2** (`MyCarBookV2.sol`): deployato su testnet a un indirizzo diverso
-  (interfaccia cambiata, non è un upgrade in-place). Aggiunge:
-  - **Fix bug km**: `logIntervention` ora aggiorna `vehicleInfo.km` solo se
-    il nuovo valore è maggiore del massimo registrato — un intervento
-    retroattivo con km più basso non fa più regredire il contachilometri
-    mostrato (prima restava fermo al valore del mint anche dopo un intervento
-    con km più alto, perché non veniva mai aggiornato on-chain).
-  - **`categoryFlags`** (bitmask `uint8`) su ogni intervento: categorie
-    combinabili — `CATEGORY_MECHANICAL=1`, `CATEGORY_BODYWORK=2`,
-    `CATEGORY_TIRES=4`, `CATEGORY_ELECTRICAL=8`, `CATEGORY_CLEANING=16`,
-    `CATEGORY_OTHER=32` — pensate per abilitare statistiche migliori.
+**MyCarBookV2 è il contratto in uso, deployato e verificato su entrambe le
+reti**:
+- Testnet (4201): `0xcf1e38bB8aB96B5b0100Af55dC7E7eF9D2e2DE60`
+- Mainnet (42): `0x24e9cd569AC99B6DF47CA767508cF63105318195`
 
-  ⚠️ **`frontend/config.js` punta già all'indirizzo v2, ma l'ABI di
-  `logIntervention` in quel file è ancora quella v1 (5 parametri, senza
-  `categoryFlags`)** — finché non si aggiorna l'ABI e si aggiunge la UI per
-  scegliere le categorie nel form intervento, **registrare un intervento
-  fallirà** (mismatch di firma/selector tra frontend e contratto deployato).
-  Questo è il prossimo passo da chiudere prima di considerare il v2 in uso.
+`MyCarBook.sol` (v1) resta nel repo per riferimento storico ma non è più
+collegato al frontend.
 
-- **Allegati intervento** (hash + upload documento): valutati e poi
-  **scartati** — decisione presa di non certificare documenti/fatture,
-  giudicato "troppo certificato" per lo scopo del progetto.
+### Funzionalità v2 rispetto al v1
 
-- **Foto veicolo al mint**: bottone sempre visibile, ma **disabilitato**
-  finché l'indirizzo connesso non risulta autorizzato. Autorizzazione
-  concessa in **due modi indipendenti** (basta uno dei due):
-  1. Presente in `backend/allowed-addresses.json` (gestito a mano da Simone)
-  2. Possiede almeno il tier **Bronze** su
-     [ChainIntegrate Membership](https://github.com/ChainIntegrate/chainintegrate-membership)
-     (letto on-chain via `tierOf(address)`, nessuna sincronizzazione manuale
-     necessaria)
+- **Fix bug km**: `logIntervention` aggiorna `vehicleInfo.km` solo se il
+  nuovo valore è maggiore del massimo registrato — un intervento retroattivo
+  con km più basso non fa mai regredire il contachilometri mostrato.
+- **`categoryFlags`** (bitmask `uint8`) su ogni intervento: categorie
+  combinabili — `CATEGORY_MECHANICAL=1`, `CATEGORY_BODYWORK=2`,
+  `CATEGORY_TIRES=4`, `CATEGORY_ELECTRICAL=8`, `CATEGORY_CLEANING=16`,
+  `CATEGORY_OTHER=32`.
+- **Allegato documento su intervento**: valutato con hash on-chain, poi
+  **scartato** ("troppo certificato" per lo scopo del progetto). Soluzione
+  adottata: solo comodità, nessun hash — il link IPFS viene agganciato in
+  coda alla `description` con un marcatore `[doc:ipfs://...]`, riconosciuto
+  e mostrato come link cliccabile dalla UI in lettura. Nessun campo dedicato
+  nel contratto.
+
+### Feature gating a fasce, tramite ChainIntegrate Membership
+
+Tre funzionalità della UI sono sbloccate in base al tier posseduto su
+[ChainIntegrate Membership](https://github.com/ChainIntegrate/chainintegrate-membership)
+(letto on-chain via `tierOf(address)`, nessuna sincronizzazione manuale) —
+gerarchia crescente, ogni tier include i vantaggi di quelli sotto:
+
+| Tier | Prezzo indicativo | Sblocca |
+|---|---|---|
+| Bronze | ~50 LYX | Foto veicolo al mint |
+| Silver | ~200 LYX | + Categorie intervento (checkbox) |
+| Gold | 500 LYX | + Documento allegato a un intervento |
+
+I prezzi non sono applicati né verificati dal contratto (mint resta
+`onlyOwner`, gestito a mano da Simone dopo ricezione pagamento fuori banda)
+— sono solo una convenzione operativa, non scritti nel codice.
+
+La **foto veicolo** ha anche una seconda via di sblocco, indipendente dalla
+membership: presenza in `backend/allowed-addresses.json` (lista manuale,
+storica, mantenuta per compatibilità).
+
+### Mint automatico a pagamento (valutato, non implementato)
+
+Si era considerato un mint/upgrade membership completamente self-service
+(l'utente paga in LYX, il contratto minta/aggiorna da solo). Non fattibile
+senza un nuovo deploy: le funzioni di mint/upgrade sono `onlyOwner`, e
+`Ownable` non permette doppia titolarità — trasferire l'ownership a una
+chiave operativa nel backend avrebbe tolto a Simone la possibilità di
+gestire tutto a mano dalla propria UP. Deciso di **non** procedere:
+gestione manuale confermata come via definitiva per ora.
 
 - **Immagine per singolo tokenId dopo il mint**: gestita da
   `admin-collection.html` (sezione dedicata) — solo l'owner del contratto
   può farlo, protezione reale on-chain (`setDataForTokenId` è `onlyOwner`).
   Fa merge col metadata esistente (non sovrascrive marca/modello/targa/VIN).
 
-- **Metadata di collezione** (icona/banner/descrizione generali, visibili
-  su universaleverything.io a livello di collezione): stessa pagina
-  `admin-collection.html`, sezione separata.
+- **Metadata di collezione** (icona/banner/descrizione, visibili su
+  universaleverything.io a livello di collezione): stessa pagina
+  `admin-collection.html`, sezione separata. Impostata su **entrambe** le
+  reti.
 
-- **Branding**: logo, favicon, banner — versione attuale generata con AI
-  esterna da Simone (non dalle bozze fatte in questa chat, superate).
+- **Traduzioni**: sia i testi statici della UI sia le etichette degli
+  `attributes` on-chain (Brand/Model/Trim/Plate/VIN, salvati sempre in
+  inglese) vengono tradotte a video in base alla lingua attiva — la
+  traduzione avviene solo in UI, il dato on-chain resta invariato.
 
-## TODO prima di considerare il v2 "in uso"
-
-1. **Aggiornare l'ABI in `frontend/config.js`**: `logIntervention` deve
-   includere `categoryFlags` (`uint8`) come nuovo parametro, stessa cosa per
-   l'evento `InterventionLogged`.
-2. **Aggiungere la UI categoria** nel form "Nuovo intervento" di
-   `index.html`: checkbox multiple (meccanica/carrozzeria/gomme/elettrico/
-   pulizia/altro), combinate in un bitmask prima di chiamare il contratto.
-   Visibili a tutti, nessun gate membership su queste checkbox (deciso).
-3. Giro di verifica manuale su testnet (mint + intervento con categorie +
-   controllo che il km non regredisca dopo un intervento retroattivo).
-4. Solo dopo: **deploy v2 su mainnet 42** con `scripts/deploy-v2.js`,
-   aggiornare `contractAddress` mainnet in `config.js`.
+- **Branding**: logo, favicon, banner — generati con AI esterna da Simone.
 
 ## Note di design (per riferimento futuro)
 
@@ -100,9 +114,12 @@ mycarbook/
 - `erc725.js` va importato come modulo ES via `esm.sh` (`import { ERC725 }
   from "https://esm.sh/@erc725/erc725.js@0.28.2"`) — il bundle CommonJS su
   jsDelivr non espone un global utilizzabile da `<script>` classico.
+- Owner del contratto (branding/metadata) e deployer (chi paga il gas) sono
+  sempre indirizzi separati per disciplina, su entrambe le reti.
 
 ## Non ancora implementato (rimandato volontariamente)
 
-- Deploy v2 su mainnet (in attesa dei TODO sopra).
+- Mint/upgrade membership self-service a pagamento (vedi sopra — richiede
+  nuovo deploy con ruoli separati, non ritenuto necessario per ora).
 - Nessuna cifratura di alcun dato — scelta esplicita, coerente con l'uso
   in fase di rivendita (storico verificabile da un futuro acquirente).
