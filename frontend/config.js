@@ -12,7 +12,7 @@ const NETWORKS = {
     name: "LUKSO Mainnet",
     rpcUrl: "https://rpc.mainnet.lukso.network",
     explorer: "https://explorer.execution.mainnet.lukso.network",
-    contractAddress: "0x0000000000000000000000000000000000000000" // TODO dopo deploy mainnet
+    contractAddress: "0x24e9cd569AC99B6DF47CA767508cF63105318195"
   }
 };
 
@@ -41,7 +41,7 @@ const MAX_DESCRIPTION_LENGTH = 280;
 // alla lista manuale allowed-addresses.json sul backend.
 const MEMBERSHIP_ADDRESSES = {
   4201: "0x01D0930B375d037FA988b02871812D291cC0131D",
-  42:   "0x0000000000000000000000000000000000000000" // TODO dopo deploy mainnet membership
+  42:   "0x29437B2F70fa4812524bdd052fFF1bD8d8cD9beC"
 };
 
 const MEMBERSHIP_ABI = [
