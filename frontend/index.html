@@ -128,23 +128,16 @@
   }
   .lang-toggle:hover{ border-color:var(--brass-dim); color:var(--ink); }
 
-  .how-it-works-btn{
-    font-family:var(--mono);
-    font-size:0.85rem;
-    font-weight:700;
-    color:var(--ink-muted);
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:50%;
-    width:1.9rem;
-    height:1.9rem;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-decoration:none;
-    flex-shrink:0;
+  .connect-row{
+    padding:0.6rem 1.25rem;
+    background:rgba(16,24,26,0.92);
+    border-bottom:1px solid var(--line);
   }
-  .how-it-works-btn:hover{ border-color:var(--brass-dim); color:var(--ink); }
+  .connect-row .wallet-chip{
+    width:100%;
+    text-align:center;
+    padding:0.6rem 0.75rem;
+  }
 
   main{ max-width:560px; margin:0 auto; padding:1.25rem; }
 
@@ -317,11 +310,14 @@
     My<span>Car</span>Book
   </div>
   <div class="header-actions">
-    <a href="how-it-works.html" class="how-it-works-btn" title="How it works" aria-label="How it works">?</a>
+    <a href="how-it-works.html" class="lang-toggle" style="text-decoration:none; display:inline-flex; align-items:center;" data-i18n="navHowItWorks">How it works</a>
     <button class="lang-toggle" id="btn-lang">IT</button>
-    <button class="wallet-chip" id="btn-connect" data-i18n="walletConnect">Connect UP</button>
   </div>
 </header>
+
+<div class="connect-row">
+  <button class="wallet-chip" id="btn-connect" data-i18n="walletConnect">Connect UP</button>
+</div>
 
 <div class="powered-by-strip">
   <span data-i18n="poweredBy">Powered by</span>
