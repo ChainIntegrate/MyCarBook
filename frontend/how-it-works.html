@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How it works — MyCarBook</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<link rel="icon" href="mycarbook_favicon.ico" sizes="any" />
+
+<style>
+  :root{
+    --bg: #10181A;
+    --surface: #1A2528;
+    --surface-raised: #213033;
+    --line: #2C3D40;
+    --ink: #EDE7DD;
+    --ink-muted: #9AA6A5;
+    --brass: #C08552;
+    --brass-dim: #8C6440;
+    --motor-green: #4E7C6B;
+
+    --display: "Oswald", sans-serif;
+    --body: "Inter", sans-serif;
+    --mono: "JetBrains Mono", monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    font-family: var(--body);
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+  }
+
+  h1{
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 1.9rem;
+    margin-bottom: 0.3rem;
+  }
+  h1 span{ color: var(--brass); }
+
+  h2{
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 1.05rem;
+    margin-top: 2.2rem;
+    color: var(--brass);
+  }
+
+  .meta{ color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+
+  a{ color: var(--brass); }
+
+  .highlight{
+    background: var(--surface-raised);
+    border-left: 3px solid var(--brass);
+    padding: 0.9rem 1.1rem;
+    margin: 1.2rem 0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+
+  .step{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    margin: 0.6rem 0;
+    font-size: 0.95rem;
+  }
+
+  .tier-table{
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .tier-table th, .tier-table td{
+    border: 1px solid var(--line);
+    padding: 0.6rem 0.7rem;
+    text-align: left;
+  }
+  .tier-table th{
+    font-family: var(--mono);
+    color: var(--ink-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+  .tier-name{ font-weight: 600; }
+  .tier-bronze{ color: #C08552; }
+  .tier-silver{ color: #C7CDD1; }
+  .tier-gold{ color: #E0B84F; }
+
+  footer{
+    margin-top: 3rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    font-family: var(--mono);
+  }
+  footer a{ color: var(--ink-muted); }
+
+  .lang-toggle{ display: flex; gap: 0.5rem; margin-bottom: 1.8rem; }
+  .lang-btn{
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-muted);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    cursor: pointer;
+  }
+  .lang-btn.active{ background: var(--brass); color: #1A1108; border-color: var(--brass); font-weight: 600; }
+
+  .cta{
+    display: inline-block;
+    background: var(--brass);
+    color: #1A1108;
+    text-decoration: none;
+    padding: 0.75rem 1.4rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  [data-lang="it"]{ display: none; }
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-en">English</button>
+  <button class="lang-btn" id="btn-it">Italiano</button>
+</div>
+
+<!-- ============================== EN ============================== -->
+<div data-lang="en">
+
+<h1>How My<span>Car</span>Book works</h1>
+<p class="meta">An on-chain vehicle maintenance logbook, built on LUKSO.</p>
+
+<div class="highlight">
+  <strong>Your vehicle, your Universal Profile, your data.</strong> No app account, no backend database holding your records — everything is written directly on-chain, readable by anyone (that's the point: a verifiable history is worth more at resale time).
+</div>
+
+<h2>1. Connect your Universal Profile</h2>
+<div class="step">
+  Open MyCarBook from your UP's browser (mobile or extension) and connect. No sign-up, no password — your UP is your identity here.
+</div>
+
+<h2>2. Register your vehicle</h2>
+<div class="step">
+  Mint your vehicle once: brand, model, trim, plate, VIN (at least one required), registration date, ownership date, current mileage. <b>Double-check before signing</b> — dates and mileage can't currently be edited after minting.
+</div>
+
+<h2>3. Log every service</h2>
+<div class="step">
+  Each time you get work done, add an entry: date, mileage, cost (optional), and a free-text description. Entries can be backdated — useful for filling in older history when you first set up your vehicle. Nothing is ever deleted or overwritten.
+</div>
+
+<h2>4. Ownership follows the vehicle</h2>
+<div class="step">
+  Sell the car, transfer the token to the buyer — the full service history goes with it. That's the actual point of writing it on-chain instead of on a piece of paper that gets lost.
+</div>
+
+<h2>ChainIntegrate Membership</h2>
+<div class="step">
+  A few extra features are unlocked based on a ChainIntegrate Membership tier — checked directly on-chain, no extra account. Higher tiers include everything from the tier below.
+  <table class="tier-table">
+    <tr><th>Tier</th><th>Unlocks</th></tr>
+    <tr><td class="tier-name tier-bronze">Bronze</td><td>Vehicle photo</td></tr>
+    <tr><td class="tier-name tier-silver">Silver</td><td>+ Service categories (mechanical, bodywork, tires...)</td></tr>
+    <tr><td class="tier-name tier-gold">Gold</td><td>+ Attach a document (e.g. invoice) to a service entry</td></tr>
+  </table>
+  To get one, DM ChainIntegrate directly — it's not self-service yet.
+</div>
+
+<h2>Is my data private?</h2>
+<div class="step">
+  No, and that's intentional. Blockchain data is public by nature — MyCarBook doesn't encrypt anything, because a verifiable, tamper-proof history is exactly what makes it useful when selling the vehicle. The app only shows you your own vehicles in the list, but the underlying data isn't hidden from anyone who knows where to look.
+</div>
+
+<h2>What is LUKSO, in one sentence?</h2>
+<p>LUKSO is a blockchain network built around digital identity — your "Universal Profile" is a bit like a social profile you actually own, and it's what holds your vehicles and their history here. You don't need to understand more than that to use MyCarBook.</p>
+
+<a class="cta" href="https://mycarbook.chainintegrate.it">Open MyCarBook →</a>
+
+<footer>
+  MyCarBook · ChainIntegrate · Live on LUKSO Mainnet
+</footer>
+
+</div>
+
+<!-- ============================== IT ============================== -->
+<div data-lang="it">
+
+<h1>Come funziona My<span>Car</span>Book</h1>
+<p class="meta">Un libretto di manutenzione veicolo on-chain, costruito su LUKSO.</p>
+
+<div class="highlight">
+  <strong>Il tuo veicolo, la tua Universal Profile, i tuoi dati.</strong> Nessun account app, nessun database di backend che custodisce i tuoi dati — tutto è scritto direttamente on-chain, leggibile da chiunque (è voluto: uno storico verificabile vale di più al momento della rivendita).
+</div>
+
+<h2>1. Connetti la tua Universal Profile</h2>
+<div class="step">
+  Apri MyCarBook dal browser della tua UP (mobile o estensione) e connettiti. Nessuna registrazione, nessuna password — la tua UP è la tua identità qui.
+</div>
+
+<h2>2. Registra il tuo veicolo</h2>
+<div class="step">
+  Minta il tuo veicolo una volta sola: marca, modello, allestimento, targa, VIN (almeno uno obbligatorio), data di immatricolazione, data di possesso, km attuali. <b>Controlla bene prima di firmare</b> — date e km non possono al momento essere modificati dopo il mint.
+</div>
+
+<h2>3. Registra ogni intervento</h2>
+<div class="step">
+  Ogni volta che fai un lavoro sull'auto, aggiungi una voce: data, km, importo (opzionale), descrizione libera. Le voci possono essere retroattive — utile per inserire lo storico più vecchio quando configuri il veicolo la prima volta. Nulla viene mai cancellato o sovrascritto.
+</div>
+
+<h2>4. La proprietà segue il veicolo</h2>
+<div class="step">
+  Vendi l'auto, trasferisci il token all'acquirente — l'intero storico di manutenzione lo segue. È proprio questo il punto di scriverlo on-chain invece che su un libretto cartaceo che si perde.
+</div>
+
+<h2>ChainIntegrate Membership</h2>
+<div class="step">
+  Alcune funzionalità extra si sbloccano in base al livello di ChainIntegrate Membership — verificato direttamente on-chain, nessun account aggiuntivo. I livelli superiori includono tutto quello dei livelli inferiori.
+  <table class="tier-table">
+    <tr><th>Livello</th><th>Sblocca</th></tr>
+    <tr><td class="tier-name tier-bronze">Bronze</td><td>Foto del veicolo</td></tr>
+    <tr><td class="tier-name tier-silver">Silver</td><td>+ Categorie intervento (meccanica, carrozzeria, gomme...)</td></tr>
+    <tr><td class="tier-name tier-gold">Gold</td><td>+ Allegare un documento (es. fattura) a un intervento</td></tr>
+  </table>
+  Per ottenerne una, scrivi in privato a ChainIntegrate — non è ancora self-service.
+</div>
+
+<h2>I miei dati sono privati?</h2>
+<div class="step">
+  No, ed è voluto. I dati sulla blockchain sono pubblici per natura — MyCarBook non cifra nulla, perché uno storico verificabile e non falsificabile è esattamente ciò che lo rende utile al momento della vendita del veicolo. L'app ti mostra solo i tuoi veicoli nella lista, ma il dato sottostante non è nascosto a chi sa dove cercare.
+</div>
+
+<h2>Cos'è LUKSO, in una frase?</h2>
+<p>LUKSO è una rete blockchain pensata attorno all'identità digitale — la tua "Universal Profile" è un po' come un profilo social, ma di tua effettiva proprietà, ed è quella che custodisce qui i tuoi veicoli e il loro storico. Non serve sapere altro per usare MyCarBook.</p>
+
+<a class="cta" href="https://mycarbook.chainintegrate.it">Apri MyCarBook →</a>
+
+<footer>
+  MyCarBook · ChainIntegrate · Live su LUKSO Mainnet
+</footer>
+
+</div>
+
+<script>
+  document.getElementById("btn-en").addEventListener("click", () => setLang("en"));
+  document.getElementById("btn-it").addEventListener("click", () => setLang("it"));
+
+  function setLang(lang) {
+    document.querySelectorAll("[data-lang]").forEach(el => {
+      el.style.display = el.dataset.lang === lang ? "block" : "none";
+    });
+    document.getElementById("btn-en").classList.toggle("active", lang === "en");
+    document.getElementById("btn-it").classList.toggle("active", lang === "it");
+    document.documentElement.lang = lang;
+    localStorage.setItem("mycarbook-how-lang", lang);
+  }
+
+  setLang(localStorage.getItem("mycarbook-how-lang") || "en");
+</script>
+
+</body>
+</html>
