@@ -140,6 +140,6 @@ app.post("/api/pin-file", imageLimiter, upload.single("image"), async (req, res)
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-app.listen(PORT, () => {
+app.listen(PORT, '127.0.0.1', () => {
   console.log(`mycarbook-backend in ascolto sulla porta ${PORT}`);
 });
