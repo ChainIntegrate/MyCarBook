@@ -994,7 +994,7 @@ async function decodeVehicleMetadata(metadataBytes){
 
 async function fetchIpfsJsonWithFallback(cidPath){
   const gateways = [
-    `https://peach-familiar-wombat-848.mypinata.cloud/ipfs/${cidPath}`,
+    `https://ipfs.chainintegrate.it/ipfs/${cidPath}`,
     `https://api.universalprofile.cloud/ipfs/${cidPath}`
   ];
 
@@ -1065,7 +1065,7 @@ function resolveIpfsUrl(ipfsUrl, usePublicGateway=false){
   const cidPath = ipfsUrl.replace("ipfs://", "");
   return usePublicGateway
     ? `https://api.universalprofile.cloud/ipfs/${cidPath}`
-    : `https://peach-familiar-wombat-848.mypinata.cloud/ipfs/${cidPath}`;
+    : `https://ipfs.chainintegrate.it/ipfs/${cidPath}`;
 }
 
 $("btn-new-vehicle").addEventListener("click", () => navigate("mint"));
@@ -1187,6 +1187,17 @@ async function submitMint(data, confirmBtn){
 // Carica la foto su Pinata se l'utente ne ha selezionata una (bottone visibile
 // solo se autorizzato). Se l'upload fallisce, avvisa ma NON blocca il mint —
 // meglio un veicolo senza foto che un mint perso per un problema di rete.
+// Firma un messaggio con la UP connessa per autorizzare un upload gated
+// (foto/documento/admin) — il backend verifica questa firma via ERC-1271
+// prima di autorizzare il pin, non si fida più del solo bottone disabilitato
+// lato UI (che resta comunque, solo per comodità/UX).
+async function signUploadAuth(purpose){
+  const timestamp = Date.now();
+  const message = `MyCarBook upload authorization\npurpose: ${purpose}\naddress: ${state.address}\nchainId: ${state.chainId}\ntimestamp: ${timestamp}`;
+  const signature = await state.signer.signMessage(message);
+  return { address: state.address, signature, chainId: state.chainId, purpose, timestamp };
+}
+
 async function uploadVehiclePhotoIfProvided(){
   const fileInput = $("f-photo");
   if(!state.canUploadPhoto || !fileInput.files || fileInput.files.length === 0) return null;
@@ -1201,9 +1212,15 @@ async function uploadVehiclePhotoIfProvided(){
     const buffer = await file.arrayBuffer();
     const hash = ethers.keccak256(new Uint8Array(buffer));
     const bitmap = await createImageBitmap(file);
+    const auth = await signUploadAuth("photo");
 
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("address", auth.address);
+    formData.append("signature", auth.signature);
+    formData.append("chainId", auth.chainId);
+    formData.append("purpose", auth.purpose);
+    formData.append("timestamp", auth.timestamp);
     const res = await fetch("/api/pin-file", { method: "POST", body: formData });
     if(!res.ok) throw new Error("upload immagine fallito");
     const data = await res.json();
@@ -1236,8 +1253,15 @@ async function uploadDocumentIfProvided(){
   }
 
   try{
+    const auth = await signUploadAuth("document");
+
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("address", auth.address);
+    formData.append("signature", auth.signature);
+    formData.append("chainId", auth.chainId);
+    formData.append("purpose", auth.purpose);
+    formData.append("timestamp", auth.timestamp);
     const res = await fetch("/api/pin-file", { method: "POST", body: formData });
     if(!res.ok) throw new Error("upload documento fallito");
     const data = await res.json();

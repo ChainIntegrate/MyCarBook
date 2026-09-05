@@ -17,7 +17,8 @@ mycarbook/
 │   ├── deploy.js           — deploy v1
 │   └── deploy-v2.js        — deploy v2
 ├── backend/
-│   ├── server.js            — proxy Pinata (mai JWT nel browser) + gate foto
+│   ├── server.js            — proxy verso nodo IPFS personale (non più
+│   │   Pinata) + verifica firma ERC-1271 sugli upload gated
 │   ├── allowed-addresses.json — lista manuale indirizzi autorizzati alla
 │   │   foto veicolo (NON committato, vive solo sul VPS — vedi .gitignore)
 │   └── allowed-addresses.example.json
@@ -53,6 +54,36 @@ collegato al frontend.
   coda alla `description` con un marcatore `[doc:ipfs://...]`, riconosciuto
   e mostrato come link cliccabile dalla UI in lettura. Nessun campo dedicato
   nel contratto.
+
+### Sicurezza upload gated + storage
+
+Fino a poco fa, il controllo "chi può caricare foto/documento" era applicato
+**solo lato UI** (bottone disabilitato) — l'endpoint `/api/pin-file` restava
+comunque chiamabile direttamente da chiunque, bypassando completamente il
+gate. Corretto: ora ogni chiamata a `/api/pin-file` richiede una **firma
+ERC-1271** (stesso pattern già in uso su MatchPredictor v3) che il backend
+verifica prima di autorizzare il pin:
+
+1. Il frontend firma un messaggio con la UP connessa (`purpose`, `address`,
+   `chainId`, `timestamp`) — un tap in più sulla UP, oltre alla firma della
+   transazione vera e propria.
+2. Il backend verifica la firma via `isValidSignature` (ERC-1271) sulla UP
+   del chiamante, con finestra anti-replay di 5 minuti.
+3. Solo dopo, controlla l'autorizzazione in base al `purpose`:
+   - `photo` → lista manuale **o** tier Bronze+
+   - `document` → tier Gold
+   - `admin` → deve essere l'owner del contratto (per `admin-collection.html`)
+
+`/api/pin-json` resta **senza** questo gate — serve anche per il mint base
+(nome/attributes), che è permissionless per design, quindi non ha senso
+richiedere una firma lì. Resta protetto solo dal rate limit, come prima.
+
+**Storage**: da Pinata al [nodo IPFS personale](https://ipfs.chainintegrate.it)
+(Kubo, VPS Contabo dedicata, `Gateway.NoFetch=true` — serve solo contenuti
+pinnati da noi). L'API di pin (`:5001`) è raggiungibile solo dall'IP del VPS
+di produzione (whitelist a livello di rete, nessuna API key). Il contenuto
+già pinnato su Pinata resta comunque raggiungibile in lettura (fallback su
+gateway pubblico), solo i nuovi upload vanno sul nodo proprio.
 
 ### Feature gating a fasce, tramite ChainIntegrate Membership
 

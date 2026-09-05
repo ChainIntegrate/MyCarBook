@@ -68,11 +68,24 @@ import { ERC725 } from "https://esm.sh/@erc725/erc725.js@0.28.2";
 const logEl = document.getElementById("log");
 function log(msg){ logEl.textContent += "\n" + msg; logEl.scrollTop = logEl.scrollHeight; }
 
-let provider, signer, address, contract;
+let provider, signer, address, contract, chainId;
+
+async function signUploadAuth(purpose){
+  const timestamp = Date.now();
+  const message = `MyCarBook upload authorization\npurpose: ${purpose}\naddress: ${address}\nchainId: ${chainId}\ntimestamp: ${timestamp}`;
+  const signature = await signer.signMessage(message);
+  return { address, signature, chainId, purpose, timestamp };
+}
 
 async function uploadImage(file){
+  const auth = await signUploadAuth("admin");
   const formData = new FormData();
   formData.append("image", file);
+  formData.append("address", auth.address);
+  formData.append("signature", auth.signature);
+  formData.append("chainId", auth.chainId);
+  formData.append("purpose", auth.purpose);
+  formData.append("timestamp", auth.timestamp);
   const res = await fetch("/api/pin-file", { method: "POST", body: formData });
   if(!res.ok) throw new Error("upload fallito: " + (await res.text()));
   const data = await res.json();
@@ -101,7 +114,7 @@ document.getElementById("btn-connect").addEventListener("click", async () => {
   signer = await provider.getSigner();
   address = await signer.getAddress();
   const network = await provider.getNetwork();
-  const chainId = Number(network.chainId);
+  chainId = Number(network.chainId);
   const netConfig = NETWORKS[chainId];
   if(!netConfig){ log("Rete non supportata: " + chainId); return; }
 
@@ -186,7 +199,7 @@ document.getElementById("btn-set-metadata").addEventListener("click", async () =
 async function fetchIpfsJson(ipfsUrl){
   const cidPath = ipfsUrl.replace("ipfs://", "");
   const gateways = [
-    `https://peach-familiar-wombat-848.mypinata.cloud/ipfs/${cidPath}`,
+    `https://ipfs.chainintegrate.it/ipfs/${cidPath}`,
     `https://api.universalprofile.cloud/ipfs/${cidPath}`
   ];
   for(const url of gateways){
