@@ -6,13 +6,15 @@ const NETWORKS = {
     name: "LUKSO Testnet",
     rpcUrl: "https://rpc.testnet.lukso.network",
     explorer: "https://explorer.execution.testnet.lukso.network",
-    contractAddress: "0xcf1e38bB8aB96B5b0100Af55dC7E7eF9D2e2DE60" // TODO dopo deploy testnet
+    contractAddress: "0xcf1e38bB8aB96B5b0100Af55dC7E7eF9D2e2DE60", // TODO dopo deploy testnet
+    deploymentBlock: 8197467 // MyCarBookV2 testnet, blocco di deploy verificato su Blockscout
   },
   42: {
     name: "LUKSO Mainnet",
     rpcUrl: "https://rpc.mainnet.lukso.network",
     explorer: "https://explorer.execution.mainnet.lukso.network",
-    contractAddress: "0x24e9cd569AC99B6DF47CA767508cF63105318195"
+    contractAddress: "0x24e9cd569AC99B6DF47CA767508cF63105318195", // MyCarBookV2 mainnet
+    deploymentBlock: 8072041 // MyCarBookV2 mainnet, blocco di deploy verificato su Blockscout
   }
 };
 

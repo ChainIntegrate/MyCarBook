@@ -1442,13 +1442,37 @@ function renderStats(events){
   `;
 }
 
+// eth_getLogs sull'RPC pubblico LUKSO rifiuta intervalli oltre 10.000
+// blocchi in una sola richiesta. Paginiamo a blocchi di 9.000 (margine di
+// sicurezza) partendo dal blocco di deploy del contratto invece che da 0,
+// per ridurre il numero di richieste necessarie man mano che la chain
+// avanza nel tempo.
+const MAX_BLOCK_RANGE = 9000;
+
+async function queryFilterPaginated(contract, filter, fromBlock){
+  const provider = contract.runner.provider;
+  const latestBlock = await provider.getBlockNumber();
+  const allEvents = [];
+
+  let start = fromBlock;
+  while(start <= latestBlock){
+    const end = Math.min(start + MAX_BLOCK_RANGE - 1, latestBlock);
+    const chunk = await contract.queryFilter(filter, start, end);
+    allEvents.push(...chunk);
+    start = end + 1;
+  }
+
+  return allEvents;
+}
+
 async function loadInterventions(tokenId){
   const timeline = $("intervention-timeline");
   timeline.innerHTML = "";
 
   try{
     const filter = state.contract.filters.InterventionLogged(tokenId);
-    const events = await state.contract.queryFilter(filter);
+    const deploymentBlock = NETWORKS[state.chainId]?.deploymentBlock || 0;
+    const events = await queryFilterPaginated(state.contract, filter, deploymentBlock);
 
     const sorted = events
       .map(e => e.args)
