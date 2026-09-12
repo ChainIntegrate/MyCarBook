@@ -1457,7 +1457,25 @@ async function queryFilterPaginated(contract, filter, fromBlock){
   let start = fromBlock;
   while(start <= latestBlock){
     const end = Math.min(start + MAX_BLOCK_RANGE - 1, latestBlock);
-    const chunk = await contract.queryFilter(filter, start, end);
+
+    // Retry con backoff: alcuni nodi RPC pubblici (specie su testnet)
+    // possono rifiutare temporaneamente una richiesta su un range storico
+    // specifico (es. "Receipt not available") — spesso legato a QUALE
+    // nodo dietro il load balancer risponde, non a un problema permanente.
+    let chunk;
+    let lastErr;
+    for(let attempt = 0; attempt < 3; attempt++){
+      try{
+        chunk = await contract.queryFilter(filter, start, end);
+        lastErr = null;
+        break;
+      }catch(err){
+        lastErr = err;
+        await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+      }
+    }
+    if(lastErr) throw lastErr;
+
     allEvents.push(...chunk);
     start = end + 1;
   }
