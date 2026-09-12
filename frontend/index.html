@@ -1051,6 +1051,21 @@ function translateAttributeKey(key){
   return map[key] ? t(map[key]) : key;
 }
 
+// Estrae un motivo leggibile da un errore ethers (revert del contratto,
+// gas insufficiente, rete, ecc.) — così l'utente vede il motivo reale nel
+// toast invece del solo messaggio generico, senza dover aprire la console.
+function extractErrorReason(err){
+  const raw = err?.reason || err?.shortMessage || err?.info?.error?.message || err?.message || "";
+  // Ripulisco i prefissi tecnici più comuni di ethers per lasciare solo
+  // la parte leggibile (es. il messaggio del require nel contratto).
+  return raw
+    .replace(/^execution reverted:?\s*/i, "")
+    .replace(/^Error:\s*/i, "")
+    .split("(")[0]
+    .trim()
+    .slice(0, 120); // non farlo diventare un romanzo nel toast
+}
+
 function escapeHtml(str){
   const div = document.createElement("div");
   div.textContent = str || "";
@@ -1176,7 +1191,8 @@ async function submitMint(data, confirmBtn){
     navigate("list");
   }catch(err){
     console.error(err);
-    showToast(t("toastTxFailed"), true);
+    const reason = extractErrorReason(err);
+    showToast(reason ? `${t("toastTxFailed")} (${reason})` : t("toastTxFailed"), true);
     if(confirmBtn){
       confirmBtn.disabled = false;
       confirmBtn.textContent = originalBtnText;
@@ -1590,7 +1606,8 @@ async function submitIntervention(data, confirmBtn){
     }
   }catch(err){
     console.error(err);
-    showToast(t("toastTxFailed"), true);
+    const reason = extractErrorReason(err);
+    showToast(reason ? `${t("toastTxFailed")} (${reason})` : t("toastTxFailed"), true);
     if(confirmBtn){
       confirmBtn.disabled = false;
       confirmBtn.textContent = originalBtnText;
