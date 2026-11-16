@@ -41,8 +41,8 @@ test("intestazioni di sicurezza su pagine e API; file di servizio non esposti", 
   }
 });
 
-test("le tre pagine si caricano senza violazioni CSP né richieste a terze parti", async () => {
-  for (const p of ["/how-it-works.html", "/admin-collection.html", "/"]) {
+test("le pagine si caricano senza violazioni CSP né richieste a terze parti", async () => {
+  for (const p of ["/how-it-works.html", "/privacy.html", "/admin-collection.html", "/"]) {
     await env.page.goto(`${env.nginx.base}${p}`);
     await env.page.waitForLoadState("networkidle");
   }

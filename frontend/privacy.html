@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy — MyCarBook</title>
+<meta name="description" content="Come MyCarBook tratta i dati: cosa è pubblico e permanente, cosa riceve e conserva ChainIntegrate, i tuoi diritti." />
+<meta name="theme-color" content="#10181A" />
+<link rel="canonical" href="https://mycarbook.chainintegrate.it/privacy.html" />
+<link rel="stylesheet" href="css/fonts.css" />
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple_touch_icon.png" />
+<link rel="stylesheet" href="css/how-it-works.css" />
+</head>
+<body>
+
+<!--
+  Informativa sulla privacy di MyCarBook (sito, app e backend).
+  Stessa impostazione dell'informativa di ChainIntegrate Account
+  (up-onboarding/web/privacy.js): stesso titolare, contatti, conservazione
+  dei log e diritti. Testo statico, nessun dato esterno.
+  Se cambia il trattamento (nuovi campi, backup, terze parti) aggiornare
+  questa pagina, la data in alto e docs/PRIVACY.md.
+-->
+
+<div class="lang-toggle">
+  <button class="lang-btn" id="btn-en">English</button>
+  <button class="lang-btn active" id="btn-it">Italiano</button>
+</div>
+
+<!-- ============================== IT ============================== -->
+<div data-lang="it">
+
+<h1>Informativa sulla privacy</h1>
+<p class="meta">Ultimo aggiornamento: 16 novembre 2026. Riguarda il sito e l'app MyCarBook (mycarbook.chainintegrate.it) e il servizio che conserva i file collegati ai veicoli. Come funziona l'app: <a href="how-it-works.html">Come funziona</a>.</p>
+
+<h2>1 · In breve</h2>
+<div class="step">
+  <ul>
+    <li><b>Il libretto è pubblico e permanente.</b> Quello che registri (dati del veicolo, targa e VIN se li inserisci, foto, date, km, ogni intervento con importo, descrizione e documento allegato) viene scritto in un registro pubblico (la blockchain LUKSO e il sistema di archiviazione IPFS): chiunque può leggerlo, ed è collegato all'indirizzo della tua Universal Profile. Ciò che è sulla blockchain non si può cancellare, da nessuno.</li>
+    <li><b>Nessun account e nessuna password</b>: ti identifica la tua Universal Profile.</li>
+    <li>Nessuna pubblicità, nessun tracciamento, nessuna statistica d'uso, nessun cookie.</li>
+  </ul>
+</div>
+
+<h2>2 · Chi è il titolare</h2>
+<div class="step">
+  Il titolare del trattamento è <b><a href="https://www.linkedin.com/in/simone-cavalletti" target="_blank" rel="noopener">Simone Cavalletti</a></b>, che offre servizi di integrazione dati e blockchain con il nome <b>ChainIntegrate</b>: sviluppa MyCarBook e gestisce il sito, il servizio e il nodo IPFS che conserva i file. Contatti per la privacy e per ogni richiesta: e-mail <b>info@chainintegrate.it</b>; anche <a href="https://t.me/Simone_1977_2" target="_blank" rel="noopener">Telegram</a> e la pagina <a href="https://www.linkedin.com/company/chainintegrate" target="_blank" rel="noopener">LinkedIn</a> di ChainIntegrate. Non è stato nominato un responsabile della protezione dei dati (non è obbligatorio per questa attività).
+</div>
+
+<h2>3 · Cosa diventa pubblico</h2>
+<div class="step">
+  Quando registri un veicolo o un intervento, firmi tu con la tua Universal Profile la scrittura nel registro pubblico:
+  <ul>
+    <li><b>sulla blockchain LUKSO</b>: l'indirizzo della Universal Profile proprietaria di ogni veicolo e di chi registra ogni intervento; data di immatricolazione, data di possesso, km; per ogni intervento data, km, categorie, importo e descrizione (fino a 280 caratteri);</li>
+    <li><b>su IPFS</b> (sul nodo di ChainIntegrate, ipfs.chainintegrate.it, con il riferimento scritto sulla blockchain): la scheda del veicolo (nome, marca, modello, allestimento, targa e VIN se li inserisci), la foto del veicolo e i documenti allegati agli interventi.</li>
+  </ul>
+  Questi dati possono essere letti e mostrati da chiunque, per esempio dai visualizzatori della blockchain o da Universal Everything, e copiati da altri nodi IPFS. Targa e VIN sono facoltativi: se non ti servono (per esempio per mostrare lo storico a un acquirente), lasciali vuoti. Non scrivere nelle descrizioni e non allegare documenti con nomi, indirizzi o altri dati personali. Prima del caricamento l'app toglie dalle foto i dati nascosti (posizione GPS, dati della fotocamera); i PDF vengono caricati così come sono e possono contenere dati nascosti (autore, programma usato).
+</div>
+
+<h2>4 · Cosa riceve ChainIntegrate, e perché</h2>
+<div class="step">
+  <ul>
+    <li><b>Quando registri un veicolo o alleghi una foto o un documento</b>: il file (la scheda del veicolo, la foto, il documento) e una firma della tua Universal Profile che lo autorizza (indirizzo della Universal Profile, impronta del file, un codice monouso e l'ora). Servono a conservare il file sul nodo IPFS, che hai chiesto (base giuridica: esecuzione del servizio richiesto, art. 6.1.b GDPR). La firma viene controllata e non viene conservata.</li>
+    <li><b>Per foto, categorie e documenti</b>: l'indirizzo della tua Universal Profile, per leggere dalla blockchain il tuo livello di ChainIntegrate Membership o controllare se sei nella lista di accesso alla foto. Base: esecuzione del servizio.</li>
+    <li><b>L'indirizzo IP</b>: il servizio lo usa per limitare le richieste ripetute, solo in memoria, per al massimo 15 minuti, senza salvarlo; il server web lo registra come per ogni sito (punto 5). Base: legittimo interesse alla sicurezza del servizio (art. 6.1.f).</li>
+  </ul>
+  Il libretto vero e proprio (veicoli, km, interventi) non passa dal servizio: lo scrivi tu sulla blockchain con la tua Universal Profile. Non usiamo i dati per altri scopi, non li vendiamo e non facciamo profilazione.
+</div>
+
+<h2>5 · Cosa conserva ChainIntegrate, e per quanto</h2>
+<div class="step">
+  <ul>
+    <li><b>I file su IPFS</b> (schede dei veicoli, foto, documenti) sul nodo di ChainIntegrate: finché il servizio è attivo, perché il libretto resti leggibile; se il servizio chiude, vengono tolti dal nodo entro 12 mesi. I file caricati per un veicolo o un intervento poi non registrato (per esempio se annulli la firma) possono essere tolti dopo 48 ore.</li>
+    <li><b>Un registro dei file caricati</b>: impronta del file (CID), tipo e data, senza indirizzi; serve a riconoscere i file mai usati.</li>
+    <li><b>La lista di accesso alla foto</b>: gli indirizzi delle Universal Profile abilitate a mano da ChainIntegrate, finché l'abilitazione vale.</li>
+    <li><b>I registri tecnici del server</b> (eventi del servizio) e quelli del server web (indirizzo IP di chi apre il sito): servono alla sicurezza e sono conservati al massimo 30 giorni.</li>
+  </ul>
+  Nel tuo browser restano solo la lingua scelta e l'elenco dei veicoli che hai nascosto dalla lista: non vengono inviati a nessuno.
+</div>
+
+<h2>6 · Con chi parlano il sito e il servizio</h2>
+<div class="step">
+  <ul>
+    <li><b>La tua estensione o app Universal Profile</b> (di LUKSO o di altri): il sito le chiede di leggere la blockchain e di firmare ciò che confermi. Il fornitore dell'estensione e il nodo LUKSO che usa vedono le richieste, secondo la loro informativa.</li>
+    <li><b>api.universalprofile.cloud</b>, il punto di accesso a IPFS usato da Universal Everything: il sito lo usa solo come riserva, per un file non presente sul nodo di ChainIntegrate. Vede l'indirizzo IP.</li>
+    <li><b>Il nodo pubblico di LUKSO</b> (rpc.mainnet.lukso.network): il servizio lo usa per controllare le firme e il livello di membership. Vede l'indirizzo IP del server e l'indirizzo della Universal Profile, non il tuo indirizzo IP.</li>
+    <li><b>Il servizio e il nodo IPFS</b> girano su server in affitto presso un fornitore di hosting, che li custodisce per conto di ChainIntegrate senza accedere ai dati.</li>
+    <li><b>Telegram</b> (Telegram Messenger Inc.), solo se scrivi all'assistenza su Telegram: vede quello che scrivi e il tuo profilo Telegram, secondo la sua informativa. Puoi sempre usare l'e-mail.</li>
+  </ul>
+  Caratteri, librerie e immagini del sito sono serviti dal dominio di ChainIntegrate: nessun servizio di terze parti (font, CDN, statistiche) viene contattato aprendo il sito.
+</div>
+
+<h2>7 · Correzioni e cancellazione: cosa si può fare e cosa no</h2>
+<div class="step">
+  <ul>
+    <li><b>Interventi, date, km</b>: scritti sulla blockchain, non si possono modificare né cancellare, da nessuno. Un errore in un intervento si corregge aggiungendo una nuova voce.</li>
+    <li><b>Scheda del veicolo</b> (nome, marca, modello, allestimento, targa, VIN, foto): tu non puoi modificarla da solo. Su richiesta del proprietario attuale del veicolo, ChainIntegrate può pubblicare una scheda nuova, corretta o senza targa e VIN, e togliere dal proprio nodo IPFS quella vecchia. Il riferimento alla scheda vecchia resta comunque nello storico della blockchain e potrebbero esisterne copie altrui, che ChainIntegrate non può far sparire.</li>
+    <li><b>Foto e documenti</b>: ChainIntegrate può toglierli dal proprio nodo IPFS, con lo stesso limite per le copie altrui.</li>
+  </ul>
+  Per una richiesta scrivi a info@chainintegrate.it indicando il veicolo e l'indirizzo della tua Universal Profile: per sapere che la richiesta viene dal proprietario, ti chiederemo di confermarla con la tua Universal Profile.
+</div>
+
+<h2>8 · Cosa garantisce il codice, e cosa no</h2>
+<div class="step">
+  Il codice di MyCarBook è pubblico (link qui sotto). Il sito esegue solo codice servito dal proprio dominio. Il servizio accetta un file solo con la firma della tua Universal Profile, legata a quel file e valida una sola volta. ChainIntegrate non ha nessun permesso sulla tua Universal Profile e non può spostare i tuoi veicoli né scrivere interventi a tuo nome. Può però sostituire la scheda di qualunque veicolo (punto 7): è un potere tecnico del contratto, usato solo su richiesta del proprietario. Le voci del libretto sono dichiarate dai proprietari: nessuno le verifica.
+</div>
+
+<h2>9 · I tuoi diritti</h2>
+<div class="step">
+  Secondo il Regolamento UE 2016/679 (GDPR) puoi chiedere l'accesso ai dati che ti riguardano conservati da ChainIntegrate (punto 5), la loro rettifica o cancellazione nei limiti del punto 7, la limitazione del trattamento, o opporti al trattamento basato sul legittimo interesse, scrivendo a info@chainintegrate.it (indica l'indirizzo della tua Universal Profile, così possiamo trovarli). Rispondiamo entro un mese. I dati scritti sulla blockchain non si possono cancellare né modificare, da nessuno: per questo ti chiediamo di non inserirvi dati riservati. Puoi anche presentare reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).
+</div>
+
+<h2>10 · Minori e modifiche</h2>
+<div class="step">
+  MyCarBook non è pensato per chi ha meno di 18 anni. Se questa informativa cambia, cambia la data in alto; le versioni precedenti restano nella cronologia del repository.
+</div>
+
+<a class="cta" href="index.html">Apri MyCarBook →</a>
+
+<footer>
+  MyCarBook · ChainIntegrate · <a href="how-it-works.html">Come funziona</a> · info@chainintegrate.it · <a href="https://github.com/ChainIntegrate/MyCarBook" target="_blank" rel="noopener">Codice sorgente</a>
+</footer>
+
+</div>
+
+<!-- ============================== EN ============================== -->
+<div data-lang="en">
+
+<h1>Privacy policy</h1>
+<p class="meta">Last updated: 16 November 2026. Covers the MyCarBook site and app (mycarbook.chainintegrate.it) and the service that stores the files linked to vehicles. How the app works: <a href="how-it-works.html">How it works</a>.</p>
+
+<h2>1 · In short</h2>
+<div class="step">
+  <ul>
+    <li><b>The logbook is public and permanent.</b> What you record (vehicle details, plate and VIN if you enter them, photo, dates, mileage, every service entry with amount, description and attached document) is written to a public record (the LUKSO blockchain and the IPFS storage system): anyone can read it, and it is linked to your Universal Profile's address. What is on the blockchain cannot be deleted, by anyone.</li>
+    <li><b>No account and no password</b>: your Universal Profile identifies you.</li>
+    <li>No ads, no tracking, no usage statistics, no cookies.</li>
+  </ul>
+</div>
+
+<h2>2 · Who is responsible</h2>
+<div class="step">
+  The controller is <b><a href="https://www.linkedin.com/in/simone-cavalletti" target="_blank" rel="noopener">Simone Cavalletti</a></b>, who offers data and blockchain integration services as <b>ChainIntegrate</b>: he develops MyCarBook and runs the site, the service and the IPFS node that stores the files. Contact for privacy and any request: e-mail <b>info@chainintegrate.it</b>; also <a href="https://t.me/Simone_1977_2" target="_blank" rel="noopener">Telegram</a> and ChainIntegrate's <a href="https://www.linkedin.com/company/chainintegrate" target="_blank" rel="noopener">LinkedIn</a> page. No data protection officer has been appointed (not required for this activity).
+</div>
+
+<h2>3 · What becomes public</h2>
+<div class="step">
+  When you register a vehicle or a service entry, you sign the write to the public record with your Universal Profile:
+  <ul>
+    <li><b>on the LUKSO blockchain</b>: the address of the Universal Profile that owns each vehicle and of whoever logs each entry; registration date, ownership date, mileage; for each entry date, mileage, categories, amount and description (up to 280 characters);</li>
+    <li><b>on IPFS</b> (on ChainIntegrate's node, ipfs.chainintegrate.it, with the reference written on the blockchain): the vehicle's details (name, brand, model, trim, plate and VIN if you enter them), the vehicle's photo and the documents attached to entries.</li>
+  </ul>
+  Anyone can read and show this data, for example blockchain explorers or Universal Everything, and other IPFS nodes can copy it. Plate and VIN are optional: if you don't need them (for example to show the history to a buyer), leave them empty. Don't write names, addresses or other personal details in descriptions, and don't attach documents showing them. Before uploading, the app removes hidden data from photos (GPS position, camera details); PDF files are uploaded as they are and may contain hidden data (author, software used).
+</div>
+
+<h2>4 · What ChainIntegrate receives, and why</h2>
+<div class="step">
+  <ul>
+    <li><b>When you register a vehicle or attach a photo or document</b>: the file (vehicle details, photo, document) and a signature of your Universal Profile authorizing it (the Universal Profile's address, the file's fingerprint, a single-use code and the time). They are used to store the file on the IPFS node, which you asked for (legal basis: performing the service requested, Art. 6.1.b GDPR). The signature is checked and not kept.</li>
+    <li><b>For photos, categories and documents</b>: your Universal Profile's address, to read your ChainIntegrate Membership tier from the blockchain or check whether you are on the photo access list. Basis: performing the service.</li>
+    <li><b>The IP address</b>: the service uses it to limit repeated requests, in memory only, for at most 15 minutes, without storing it; the web server logs it as for any site (section 5). Basis: legitimate interest in the service's security (Art. 6.1.f).</li>
+  </ul>
+  The logbook itself (vehicles, mileage, entries) does not go through the service: you write it to the blockchain with your Universal Profile. The data is used for nothing else, never sold, and there is no profiling.
+</div>
+
+<h2>5 · What ChainIntegrate keeps, and for how long</h2>
+<div class="step">
+  <ul>
+    <li><b>The files on IPFS</b> (vehicle details, photos, documents) on ChainIntegrate's node: while the service runs, so the logbook stays readable; if the service closes, they are removed from the node within 12 months. Files uploaded for a vehicle or entry that was then not recorded (for example if you cancel the signature) may be removed after 48 hours.</li>
+    <li><b>A log of uploaded files</b>: the file's fingerprint (CID), kind and date, without addresses; used to recognise files never used.</li>
+    <li><b>The photo access list</b>: the addresses of the Universal Profiles enabled by hand by ChainIntegrate, while the enablement lasts.</li>
+    <li><b>The server's technical logs</b> (the service's events) and the web server's logs (the IP address of whoever opens the site): they serve security and are kept for at most 30 days.</li>
+  </ul>
+  Your browser only keeps the language you chose and the list of vehicles you hid from your list: they are sent to no one.
+</div>
+
+<h2>6 · Who the site and the service talk to</h2>
+<div class="step">
+  <ul>
+    <li><b>Your Universal Profile extension or app</b> (LUKSO's or another): the site asks it to read the blockchain and to sign what you confirm. The extension's provider and the LUKSO node it uses see the requests, under their own policy.</li>
+    <li><b>api.universalprofile.cloud</b>, the IPFS access point Universal Everything uses: the site uses it only as a fallback, for a file not on ChainIntegrate's node. It sees the IP address.</li>
+    <li><b>LUKSO's public node</b> (rpc.mainnet.lukso.network): the service uses it to check signatures and the membership tier. It sees the server's IP address and the Universal Profile's address, not your IP address.</li>
+    <li><b>The service and the IPFS node</b> run on servers rented from a hosting provider, which keeps them on ChainIntegrate's behalf without accessing the data.</li>
+    <li><b>Telegram</b> (Telegram Messenger Inc.), only if you write to support on Telegram: it sees what you write and your Telegram profile, under its own policy. You can always use e-mail.</li>
+  </ul>
+  The site's fonts, libraries and images are served from ChainIntegrate's domain: no third-party service (fonts, CDN, statistics) is contacted when you open the site.
+</div>
+
+<h2>7 · Corrections and deletion: what can be done and what cannot</h2>
+<div class="step">
+  <ul>
+    <li><b>Service entries, dates, mileage</b>: written on the blockchain, they cannot be changed or deleted, by anyone. A mistake in an entry is corrected by adding a new entry.</li>
+    <li><b>Vehicle details</b> (name, brand, model, trim, plate, VIN, photo): you cannot change them yourself. At the request of the vehicle's current owner, ChainIntegrate can publish new details, corrected or without plate and VIN, and remove the old ones from its own IPFS node. The reference to the old details stays in the blockchain's history, and other people's copies may exist, which ChainIntegrate cannot remove.</li>
+    <li><b>Photos and documents</b>: ChainIntegrate can remove them from its own IPFS node, with the same limit for other people's copies.</li>
+  </ul>
+  For a request, write to info@chainintegrate.it naming the vehicle and your Universal Profile's address: to know the request comes from the owner, we will ask you to confirm it with your Universal Profile.
+</div>
+
+<h2>8 · What the code guarantees, and what it does not</h2>
+<div class="step">
+  MyCarBook's code is public (link below). The site runs only code served from its own domain. The service accepts a file only with your Universal Profile's signature, bound to that file and valid once. ChainIntegrate has no permission on your Universal Profile and cannot move your vehicles or write entries in your name. It can, however, replace any vehicle's details (section 7): it is a technical power of the contract, used only at the owner's request. Logbook entries are declared by the owners: nobody checks them.
+</div>
+
+<h2>9 · Your rights</h2>
+<div class="step">
+  Under EU Regulation 2016/679 (GDPR) you can ask for access to the data about you kept by ChainIntegrate (section 5), its correction or deletion within the limits of section 7, the restriction of its processing, or object to processing based on legitimate interest, by writing to info@chainintegrate.it (give your Universal Profile's address, so we can find it). We answer within one month. Data written to the blockchain cannot be deleted or changed, by anyone: that is why we ask you not to put private data there. You can also lodge a complaint with the Italian data protection authority (Garante per la protezione dei dati personali, garanteprivacy.it).
+</div>
+
+<h2>10 · Minors and changes</h2>
+<div class="step">
+  MyCarBook is not meant for people under 18. If this policy changes, the date at the top changes; earlier versions stay in the repository's history.
+</div>
+
+<a class="cta" href="index.html">Open MyCarBook →</a>
+
+<footer>
+  MyCarBook · ChainIntegrate · <a href="how-it-works.html">How it works</a> · info@chainintegrate.it · <a href="https://github.com/ChainIntegrate/MyCarBook" target="_blank" rel="noopener">Source code</a>
+</footer>
+
+</div>
+
+<script src="js/how-it-works.js"></script>
+</body>
+</html>

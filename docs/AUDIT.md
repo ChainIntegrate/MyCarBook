@@ -9,12 +9,28 @@ in modo generico finché non vengono corretti; il dettaglio tecnico viene
 aggiunto insieme alla correzione.
 
 Legenda: ✅ corretto, con test negativo, in produzione · ⏳ aperto ·
-📌 non correggibile senza un nuovo contratto (contratto già deployato), solo
-documentato e mitigato · ➖ segnalazione non confermata
+📌 limite accettato e documentato: richiederebbe un nuovo contratto
+(versione 2), oggi non previsto · ➖ segnalazione non confermata
 
 Postura al 4/11: debole (1 High, 7 Medium, 7 Low, 2 Info). Correzioni
-rilasciate in produzione il 16/11/2026 (PR #1 e seguente): vedi
+rilasciate in produzione il 16/11/2026 (PR #1 e seguenti): vedi
 [Rilascio](#rilascio).
+
+**Decisione del 16/11/2026: nessun nuovo contratto per ora.** MyCarBook
+resta un libretto **autodichiarato**, non uno storico certificato, con i
+limiti scritti in modo chiaro nell'app, in "Come funziona", nella guida e
+nell'[informativa](../frontend/privacy.html). I punti 📌 (MCB-04, MCB-08,
+MCB-11, MCB-12) sono limiti accettati, come i punti "Documented" / "Version 2"
+di GasTrace. Condizioni:
+- la UP owner del contratto può sostituire la scheda di qualunque veicolo:
+  i permessi dei suoi controller vanno tenuti al minimo (report generale,
+  GEN-01);
+- le richieste dei proprietari (correzione, rimozione di targa/VIN, foto)
+  si gestiscono con la procedura dell'informativa, punto 7.
+Un nuovo contratto andrebbe riconsiderato se MyCarBook dovesse essere
+presentato come storico affidabile per la compravendita (officine,
+concessionari) o se gli utenti crescessero al punto da rendere le
+correzioni a mano frequenti.
 
 ## Metodo
 
@@ -173,9 +189,12 @@ rilasciate in produzione il 16/11/2026 (PR #1 e seguente): vedi
   Fatto: l'indirizzo non è più un default nel codice (`IPFS_API_URL`
   obbligatorio), supporto a `IPFS_API_AUTH` (autenticazione Kubo
   `API.Authorizations`), test con nodo che richiede l'intestazione
-  (`backend/test/pins.test.js`). Aperto: tunnel/TLS tra VPS e nodo (da
-  fare sui server; procedura in OPERATIONS.md). L'IP resta nella
-  cronologia git: la protezione vera è il firewall del nodo.
+  (`backend/test/pins.test.js`). Aperto, **rischio accettato per ora**
+  (16/11): tunnel/TLS tra VPS e nodo. Sul tratto viaggiano solo file
+  destinati a essere pubblici, la porta dell'API non è raggiungibile
+  dall'esterno e il controllo giornaliero segnala i file mancanti; da
+  rivedere se il nodo ospiterà dati riservati (procedura in OPERATIONS.md).
+  L'IP resta nella cronologia git: la protezione vera è il firewall del nodo.
 - 📌 **MCB-08 — Funzioni a pagamento non imposte dal contratto** (Low).
   Presente a e38be66: `contracts/MyCarBookV2.sol:131-158` e `:91-111`;
   `how-it-works.html:204/269` ("checked directly on-chain").
@@ -203,9 +222,14 @@ rilasciate in produzione il 16/11/2026 (PR #1 e seguente): vedi
   - "Come funziona": elenco di cosa è pubblico, cosa si può e non si può
     cancellare, contatto; link "Dati e privacy" a piè di pagina;
   - inventario dei campi e proposta di riduzione: [PRIVACY.md](PRIVACY.md).
-  ⏳ Informativa completa (titolare, base giuridica, conservazione, diritti,
-  terze parti): bozza dei contenuti in PRIVACY.md, da validare e pubblicare.
-  ⏳ La guida su www.chainintegrate.it (altro sito) va allineata.
+  - informativa sulla privacy in `frontend/privacy.html` (IT/EN, 16/11),
+    con la stessa impostazione di quella di ChainIntegrate Account
+    (up-onboarding): titolare, cosa è pubblico, cosa riceve e conserva
+    ChainIntegrate e per quanto, terze parti, correzioni e cancellazione
+    (cosa si può fare e cosa no), diritti; collegata dal piè di pagina
+    dell'app e da "Come funziona".
+  ⏳ La guida su www.chainintegrate.it (altro sito): testo corretto
+  consegnato il 16/11, da pubblicare sul sito.
   Test: `tests/e2e/flows.test.mjs` (mint con targa senza presa d'atto:
   nessun riepilogo, nessuna firma; testo servito), `static-checks`.
 - ✅ **MCB-06 — Foto e documenti pinnati con EXIF/GPS** (Medium).
@@ -235,8 +259,10 @@ rilasciate in produzione il 16/11/2026 (PR #1 e seguente): vedi
   ChainIntegrate che gestisce il contratto, per qualunque veicolo. Stesso
   avviso nel README e nel pannello admin.
   📌 Il potere dell'owner e l'impossibilità per il proprietario di
-  correggere i propri dati restano finché non si fa il nuovo contratto
-  (rimandato).
+  correggere i propri dati restano (decisione del 16/11). Lo stesso potere
+  è la procedura per le richieste del proprietario: scheda nuova, corretta
+  o senza targa/VIN, e scheda vecchia tolta dal nodo; il riferimento resta
+  nello storico della catena (informativa, punto 7).
   Test: `static-checks` (frasi rimosse).
 
 ## Funzionalità e affidabilità
@@ -285,8 +311,8 @@ rilasciate in produzione il 16/11/2026 (PR #1 e seguente): vedi
   (preferenza locale) con "Mostra veicoli nascosti"; "Trasferisci
   all'acquirente" con LSP8 `transfer(…, force=false)` (solo verso UP o
   contratti che accettano LSP8), indirizzo validato.
-  📌 Impedire l'invio non richiesto (`force=true`) richiede il nuovo
-  contratto.
+  📌 Impedire l'invio non richiesto (`force=true`) richiederebbe un nuovo
+  contratto: accettato (finora nessun trasferimento sul contratto).
   Test: `tests/e2e/xss-csp.test.mjs` (token malformato non rompe la lista),
   `tests/e2e/flows.test.mjs` (nascondi/mostra; trasferimento: indirizzo non
   valido, proprio o del contratto rifiutati, poi `force=false`),
@@ -354,5 +380,10 @@ Rilascio del 16/11/2026 sul VPS (dettagli in [OPERATIONS.md](OPERATIONS.md)):
 4. ✅ ripin dei file sul nodo e controllo giornaliero attivo (MCB-17);
 5. ✅ `ADMIN_SIGNER_ADDRESS=any` (PR #2): upload admin attivi per la UP
    owner da qualunque suo controller con permesso SIGN;
-6. ⏳ backup fuori server (rimandato), guida su www.chainintegrate.it,
-   informativa privacy.
+6. ✅ informativa sulla privacy (`privacy.html`): online con il
+   `git pull` successivo;
+7. registri tecnici al massimo 30 giorni, come dice l'informativa: Nginx
+   ruota già i log (14 giorni, default Ubuntu); per i log di PM2 serve
+   `pm2-logrotate` (OPERATIONS.md, §5);
+8. ⏳ backup fuori server (rimandato), pubblicazione della guida corretta
+   su www.chainintegrate.it.

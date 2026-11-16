@@ -30,6 +30,7 @@ mycarbook/
 ├── tests/                 — test frontend (jsdom) ed end-to-end (Chromium + Nginx)
 └── frontend/
     ├── index.html            — UI pubblica, vanilla JS (js/app.js), mobile-first, i18n EN/IT
+    ├── privacy.html          — informativa sulla privacy (IT/EN)
     ├── js/, css/             — codice e stili (nessuno script/stile inline: CSP)
     ├── vendor/, fonts/       — ethers, erc725.js e font serviti in locale (SHA256SUMS)
     ├── admin-collection.html — pannello admin (owner contratto): metadata
