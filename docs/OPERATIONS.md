@@ -19,15 +19,23 @@ Nuove variabili in `backend/.env` (vedi `backend/.env.example`):
 | `AUTH_DOMAIN` | `mycarbook.chainintegrate.it` |
 | `ALLOWED_CHAIN_IDS` | `42` |
 | `ADMIN_UP_ADDRESS` | UP owner del contratto (oggi `0x4a2605796e0d91A9667d6E30365aEEC384C48c27`) |
-| `ADMIN_SIGNER_ADDRESS` | indirizzo della **chiave controller** con cui firma l'admin (vedi sotto) |
+| `ADMIN_SIGNER_ADDRESS` | `any` (qualunque controller della UP owner con permesso SIGN), oppure l'indirizzo di una sola chiave controller; vuoto = admin disattivato |
 | `TRUST_PROXY` | `loopback` (default) |
 
-Chiave admin: è l'indirizzo EOA del controller della UP owner usato
-dall'estensione sul computer dell'admin (visibile nell'estensione, sezione
-controller/permessi, o su universaleverything.io). Deve avere il permesso
-SIGN. Firme di altri controller della stessa UP vengono rifiutate. Quando
-l'ownership del contratto verrà spostata: aggiornare entrambe le variabili e
-riavviare.
+Firma admin: con `ADMIN_SIGNER_ADDRESS=any` (scelta in produzione) basta
+la firma della UP owner da qualunque dispositivo, cioè da qualunque suo
+controller con permesso SIGN, verificata on-chain dal KeyManager. Per
+restringere a un solo dispositivo si indica l'indirizzo della sua chiave
+controller: per ricavarlo, sul sito connesso con la UP owner, in console:
+
+```js
+const s = await new ethers.BrowserProvider(window.lukso).getSigner();
+const msg = "MyCarBook: verifica chiave admin";
+console.log(ethers.verifyMessage(msg, await s.signMessage(msg)));
+```
+
+Quando l'ownership del contratto verrà spostata: aggiornare
+`ADMIN_UP_ADDRESS` e riavviare.
 
 ```bash
 pm2 restart mycarbook-backend   # nome del processo PM2 in uso

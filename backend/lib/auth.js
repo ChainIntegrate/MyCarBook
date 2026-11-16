@@ -91,14 +91,17 @@ async function verifyAuth({ headers, config, chain, nonces, now }) {
   const hash = ethers.hashMessage(message);
 
   if (purpose === "admin") {
-    // Legame con UNA chiave precisa: non basta un controller qualsiasi
-    // della UP owner, deve firmare la chiave admin configurata.
-    if (!config.adminUpAddress || !config.adminSignerAddress) {
+    // Solo la UP owner configurata. Con ADMIN_SIGNER_ADDRESS=any basta un
+    // suo controller con permesso SIGN (verifica ERC-1271 sotto); con un
+    // indirizzo, deve firmare proprio quella chiave.
+    if (!config.adminUpAddress || (!config.adminSignerAny && !config.adminSignerAddress)) {
       throw new AuthError(403, "Azioni admin non configurate su questo server.");
     }
     if (ethers.getAddress(address) !== config.adminUpAddress) {
       throw new AuthError(403, "Indirizzo non autorizzato per questa azione.");
     }
+  }
+  if (purpose === "admin" && !config.adminSignerAny) {
     let signer;
     try {
       signer = ethers.recoverAddress(hash, signature);

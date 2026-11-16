@@ -65,3 +65,60 @@ test("la chiave admin configurata può fare upload admin", async () => {
   const res2 = await postJson(ctx.base, collectionJson, h2);
   assert.equal(res2.status, 200);
 });
+
+// ADMIN_SIGNER_ADDRESS=any: qualunque controller della UP owner con SIGN
+// (comportamento richiesto dopo il rilascio), ma solo per la UP owner.
+test("modalità any: un altro controller della UP owner è accettato", async () => {
+  const local = await startApp({ env: { ADMIN_SIGNER_ADDRESS: "any" } });
+  try {
+    const img = png();
+    const h = await signAuth({ wallet: wallets.ownerOtherKey, up: UP.owner, purpose: "admin", content: img });
+    assert.equal((await postFile(local.base, img, h)).status, 200);
+  } finally {
+    await local.close();
+  }
+});
+
+test("modalità any: una UP diversa dalla owner resta rifiutata", async () => {
+  const local = await startApp({ env: { ADMIN_SIGNER_ADDRESS: "ANY" } });
+  try {
+    const img = png();
+    const h = await signAuth({ wallet: wallets.userCtrl, up: UP.user, purpose: "admin", content: img });
+    assert.equal((await postFile(local.base, img, h)).status, 403);
+    assert.equal(local.ipfs.pinned.length, 0);
+  } finally {
+    await local.close();
+  }
+});
+
+test("modalità any: chi non è controller della UP owner resta rifiutato", async () => {
+  const local = await startApp({ env: { ADMIN_SIGNER_ADDRESS: "any" } });
+  try {
+    const img = png();
+    const h = await signAuth({ wallet: wallets.userCtrl, up: UP.owner, purpose: "admin", content: img });
+    assert.equal((await postFile(local.base, img, h)).status, 401);
+
+    const json = JSON.stringify({ LSP4Metadata: { name: "x" } });
+    const h2 = await signAuth({ wallet: wallets.otherCtrl, up: UP.owner, purpose: "admin", content: Buffer.from(json) });
+    assert.equal((await postJson(local.base, json, h2)).status, 401);
+    assert.equal(local.ipfs.pinned.length, 0);
+  } finally {
+    await local.close();
+  }
+});
+
+test("modalità any: senza ADMIN_UP_ADDRESS le azioni admin restano disattivate", async () => {
+  const local = await startApp({ env: { ADMIN_SIGNER_ADDRESS: "any", ADMIN_UP_ADDRESS: "" } });
+  try {
+    const img = png();
+    const h = await signAuth({ wallet: wallets.adminKey, up: UP.owner, purpose: "admin", content: img });
+    assert.equal((await postFile(local.base, img, h)).status, 403);
+  } finally {
+    await local.close();
+  }
+});
+
+test("valore non valido in ADMIN_SIGNER_ADDRESS: il server non parte", () => {
+  const { loadConfig } = require("../lib/config");
+  assert.throws(() => loadConfig({ ADMIN_SIGNER_ADDRESS: "tutti" }), /ADMIN_SIGNER_ADDRESS/);
+});

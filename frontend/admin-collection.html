@@ -13,7 +13,7 @@
 <body>
 
 <h1>MyCarBook — Collection metadata admin</h1>
-<p>Pagina non collegata alla navigazione pubblica. Serve solo a impostare, una tantum, l'icona/descrizione della collezione (visibile su universaleverything.io e simili). Va eseguita connettendo la UP che risulta <code>owner()</code> del contratto — il contratto stesso rifiuta la transazione se non lo sei. Gli upload su IPFS sono accettati solo se firmati dalla chiave admin configurata sul server (<code>ADMIN_SIGNER_ADDRESS</code>), non da un controller qualsiasi della UP.</p>
+<p>Pagina non collegata alla navigazione pubblica. Serve solo a impostare, una tantum, l'icona/descrizione della collezione (visibile su universaleverything.io e simili). Va eseguita connettendo la UP che risulta <code>owner()</code> del contratto — il contratto stesso rifiuta la transazione se non lo sei. Gli upload su IPFS sono accettati solo se firmati dalla UP owner configurata sul server (<code>ADMIN_UP_ADDRESS</code>; con <code>ADMIN_SIGNER_ADDRESS</code> si può restringere a una sola chiave controller).</p>
 
 <div class="row">
   <button id="btn-connect">Connect UP</button>
