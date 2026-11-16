@@ -1,17 +1,25 @@
 {
   "name": "mycarbook-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Proxy verso Pinata per il pin del LSP4Metadata di MyCarBook — unico scopo, non espone mai il JWT al browser.",
+  "description": "Backend di MyCarBook: pin su nodo IPFS proprio di metadata e file, con autorizzazione firmata dalla Universal Profile (ERC-1271) legata al contenuto, monouso.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test test/*.test.js",
+    "check-pins": "node scripts/check-pins.js",
+    "repin": "node scripts/check-pins.js --repin",
+    "backup-ipfs": "bash scripts/backup-ipfs.sh"
   },
   "dependencies": {
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "express-rate-limit": "^7.4.0",
-    "multer": "^1.4.5-lts.1"
+    "ethers": "^6.13.4",
+    "express": "^4.22.3",
+    "express-rate-limit": "^7.5.1",
+    "multer": "^2.0.2"
+  },
+  "engines": {
+    "node": ">=18.17.0"
   }
 }

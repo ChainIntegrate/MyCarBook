@@ -1,0 +1,13 @@
+# Backup settimanale fuori server dei contenuti IPFS di MyCarBook (MCB-17).
+# BACKUP_REMOTE deve puntare FUORI dal VPS (rclone o rsync via SSH).
+[Unit]
+Description=MyCarBook - backup CAR dei contenuti IPFS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mycarbook
+WorkingDirectory=/var/www/mycarbook/backend
+EnvironmentFile=/var/www/mycarbook/backend/.env
+ExecStart=/usr/bin/bash scripts/backup-ipfs.sh

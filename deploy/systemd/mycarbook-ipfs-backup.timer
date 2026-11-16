@@ -1,0 +1,10 @@
+[Unit]
+Description=MyCarBook - backup IPFS settimanale
+
+[Timer]
+OnCalendar=Sun *-*-* 03:41:00
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

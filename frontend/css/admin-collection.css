@@ -1,0 +1,8 @@
+body{ font-family:monospace; background:#10181A; color:#EDE7DD; max-width:640px; margin:2rem auto; padding:1rem; }
+h1{ font-size:1.1rem; }
+button{ padding:0.6rem 1rem; margin:0.4rem 0; cursor:pointer; }
+.row{ margin:1rem 0; }
+.log{ background:#1A2528; padding:0.75rem; border-radius:6px; white-space:pre-wrap; font-size:0.8rem; max-height:300px; overflow:auto; }
+input[type=file]{ color:#EDE7DD; }
+hr{ border-color:#2C3D40; margin:2rem 0; }
+.token-input{ padding:0.4rem; width:120px; }

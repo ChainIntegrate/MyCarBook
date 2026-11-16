@@ -148,3 +148,6 @@ cache/
 artifacts/
 typechain-types/
 backend/allowed-addresses.json
+
+# Backend: registro dei pin (sul VPS)
+backend/data/

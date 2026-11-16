@@ -1,0 +1,15 @@
+# Controllo giornaliero dei pin IPFS di MyCarBook (audit MCB-17):
+# ripinna i file mancanti; esce con errore se qualcosa resta mancante.
+# Percorsi e utente da adattare al VPS. Installazione: docs/OPERATIONS.md.
+[Unit]
+Description=MyCarBook - controllo e ripristino pin IPFS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mycarbook
+WorkingDirectory=/var/www/mycarbook/backend
+ExecStart=/usr/bin/node scripts/check-pins.js --repin
+# Notifica in caso di errore: collegare qui un servizio OnFailure (es. mail).
+# OnFailure=notify-admin@%n.service
