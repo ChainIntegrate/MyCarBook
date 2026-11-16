@@ -111,9 +111,12 @@ da `frontend/js/lib/ipfs.js` e dalla CSP.
 
 - Tratto VPS → nodo IPFS: tunnel WireGuard/SSH o TLS + `API.Authorizations`
   (Kubo ≥ 0.25), poi `IPFS_API_AUTH` (MCB-13).
-- Gateway `ipfs.chainintegrate.it`: intestazioni di
-  `deploy/nginx/ipfs-gateway-headers.conf`, prima in Report-Only,
-  verificando immagini e PDF in tutte le app che usano il gateway (MCB-10).
+- Gateway `ipfs.chainintegrate.it`: intestazioni applicate il 16/11
+  (`deploy/nginx/ipfs-gateway-headers.conf`, nel blocco `server` HTTPS di
+  `/etc/nginx/sites-available/ipfs-gateway` sul server del nodo). Ogni
+  modifica va provata prima in Report-Only, perché il gateway è condiviso
+  con le altre app; al primo PDF in chiaro aperto direttamente dal gateway,
+  verificare che si visualizzi (MCB-10).
 - Nodo: valutare `Reprovider.Strategy=pinned` (MCB-06).
 - Backend: `RPC_URL_42` verso il nodo LUKSO proprio (MCB-16).
 

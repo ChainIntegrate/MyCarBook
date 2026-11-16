@@ -169,10 +169,14 @@ correzioni a mano frequenti.
   decisi dal server.
   Test: SVG/HTML dichiarati `image/png` rifiutati, PDF non accettato come
   foto, nome `../../evil.html` sostituito (`backend/test/pin-file.test.js`).
-  ⏳ Parte gateway: le intestazioni consigliate per `ipfs.chainintegrate.it`
-  sono in `deploy/nginx/ipfs-gateway-headers.conf`; il gateway è su un altro
-  server e condiviso con le altre app, da applicare lì (prima in
-  Report-Only).
+  Parte gateway (16/11): verificato dal vivo che `ipfs.chainintegrate.it`
+  non mandava né `nosniff` né CSP. Applicate sul server del nodo le
+  intestazioni di `deploy/nginx/ipfs-gateway-headers.conf`: `nosniff`,
+  `Referrer-Policy: no-referrer` e una CSP senza script (`default-src
+  'none'`, `object-src 'self'` per i PDF in chiaro), prima in Report-Only.
+  Verificati: immagine aperta dal gateway, allegato cifrato scaricato e
+  aperto da Traceability. Da riverificare al primo PDF in chiaro aperto
+  direttamente dal gateway (oggi nessuno su MyCarBook).
 - ✅ **MCB-07 — multer 1.x e body-parser vulnerabili** (Medium).
   Presente a e38be66: `backend/package-lock.json` (multer `1.4.5-lts.2`,
   body-parser `1.20.6`, express `4.22.2`); multer prima della verifica
@@ -228,8 +232,7 @@ correzioni a mano frequenti.
     ChainIntegrate e per quanto, terze parti, correzioni e cancellazione
     (cosa si può fare e cosa no), diritti; collegata dal piè di pagina
     dell'app e da "Come funziona".
-  ⏳ La guida su www.chainintegrate.it (altro sito): testo corretto
-  consegnato il 16/11, da pubblicare sul sito.
+  La guida su www.chainintegrate.it è stata corretta e pubblicata il 16/11.
   Test: `tests/e2e/flows.test.mjs` (mint con targa senza presa d'atto:
   nessun riepilogo, nessuna firma; testo servito), `static-checks`.
 - ✅ **MCB-06 — Foto e documenti pinnati con EXIF/GPS** (Medium).
@@ -385,5 +388,7 @@ Rilascio del 16/11/2026 sul VPS (dettagli in [OPERATIONS.md](OPERATIONS.md)):
 7. registri tecnici al massimo 30 giorni, come dice l'informativa: Nginx
    ruota già i log (14 giorni, default Ubuntu); per i log di PM2 serve
    `pm2-logrotate` (OPERATIONS.md, §5);
-8. ⏳ backup fuori server (rimandato), pubblicazione della guida corretta
-   su www.chainintegrate.it.
+8. ✅ guida su www.chainintegrate.it aggiornata;
+9. ✅ intestazioni di sicurezza sul gateway `ipfs.chainintegrate.it`
+   (MCB-10 / GEN-03), CSP prima in Report-Only poi applicata;
+10. ⏳ backup fuori server (rimandato).
