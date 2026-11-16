@@ -1,7 +1,7 @@
 
 // Pannello admin (spostato da script inline per la CSP). Gli upload sono
-// firmati con la UP owner e accettati dal backend solo se la firma viene
-// dalla chiave admin configurata (ADMIN_SIGNER_ADDRESS).
+// firmati con la UP owner (ADMIN_UP_ADDRESS sul backend); ADMIN_SIGNER_ADDRESS
+// decide se basta un suo controller qualsiasi ("any") o una chiave precisa.
 import { ERC725 } from "../vendor/erc725-0.28.2.esm.js";
 import { signUploadHeaders } from "./lib/auth-message.js";
 import { gatewayUrls } from "./lib/ipfs.js";

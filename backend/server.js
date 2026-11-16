@@ -10,8 +10,10 @@ if (!config.ipfsApiUrl) {
   console.error("IPFS_API_URL non impostato in .env: impossibile avviare il backend.");
   process.exit(1);
 }
-if (!config.adminUpAddress || !config.adminSignerAddress) {
+if (!config.adminUpAddress || (!config.adminSignerAny && !config.adminSignerAddress)) {
   console.warn("ADMIN_UP_ADDRESS / ADMIN_SIGNER_ADDRESS non impostati: upload admin disattivati.");
+} else {
+  console.log(`Upload admin: UP ${config.adminUpAddress}, ${config.adminSignerAny ? "qualunque controller con SIGN" : `solo la chiave ${config.adminSignerAddress}`}.`);
 }
 
 const app = createApp({

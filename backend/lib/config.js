@@ -59,11 +59,18 @@ function loadConfig(env = process.env) {
     allowedChainIds,
     rpcUrls,
     membershipAddresses: MEMBERSHIP_ADDRESSES,
-    // Admin = UP owner del contratto + UNA chiave controller precisa di
-    // quella UP. Entrambi obbligatori: se uno manca, le azioni admin sono
-    // disattivate. Da aggiornare quando l'ownership verrà spostata.
+    // Admin = UP owner del contratto (obbligatoria). ADMIN_SIGNER_ADDRESS:
+    // - "any": qualunque controller della UP owner con permesso SIGN
+    //   (verificato on-chain da isValidSignature / KeyManager);
+    // - un indirizzo: solo quella chiave controller;
+    // - vuoto: azioni admin disattivate (un errore di configurazione non
+    //   deve aprire l'accesso).
+    // Da aggiornare quando l'ownership verrà spostata.
     adminUpAddress: parseAddress(env.ADMIN_UP_ADDRESS, "ADMIN_UP_ADDRESS"),
-    adminSignerAddress: parseAddress(env.ADMIN_SIGNER_ADDRESS, "ADMIN_SIGNER_ADDRESS"),
+    adminSignerAny: String(env.ADMIN_SIGNER_ADDRESS || "").trim().toLowerCase() === "any",
+    adminSignerAddress: String(env.ADMIN_SIGNER_ADDRESS || "").trim().toLowerCase() === "any"
+      ? null
+      : parseAddress(env.ADMIN_SIGNER_ADDRESS, "ADMIN_SIGNER_ADDRESS"),
     ipfsApiUrl: env.IPFS_API_URL || null,
     // Intestazione Authorization verso l'API Kubo (API.Authorizations,
     // Kubo >= 0.25), es. "Basic dXNlcjpwYXNz" oppure "Bearer ...".
