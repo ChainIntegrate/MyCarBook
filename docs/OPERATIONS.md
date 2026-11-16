@@ -116,3 +116,22 @@ da `frontend/js/lib/ipfs.js` e dalla CSP.
   verificando immagini e PDF in tutte le app che usano il gateway (MCB-10).
 - Nodo: valutare `Reprovider.Strategy=pinned` (MCB-06).
 - Backend: `RPC_URL_42` verso il nodo LUKSO proprio (MCB-16).
+
+## 5. Conservazione dei log (massimo 30 giorni)
+
+L'informativa (`frontend/privacy.html`, punto 5) dice che i registri
+tecnici del server sono conservati al massimo 30 giorni.
+
+- Nginx: ruotato da logrotate (default Ubuntu: 14 giorni), verificare con
+  `grep -E "rotate|daily|weekly" /etc/logrotate.d/nginx`.
+- PM2 (`/root/.pm2/logs/`): senza rotazione crescono per sempre. Una volta,
+  sul server (vale per tutti i processi PM2 di root):
+
+```bash
+sudo pm2 install pm2-logrotate
+sudo pm2 set pm2-logrotate:rotateInterval '0 0 * * *'
+sudo pm2 set pm2-logrotate:retain 30
+sudo pm2 set pm2-logrotate:compress true
+```
+
+  Per svuotare subito i log vecchi di MyCarBook: `sudo pm2 flush mycarbook-backend`.

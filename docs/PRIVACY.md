@@ -84,10 +84,14 @@ Con il nuovo contratto (rimandato):
    condivisi con l'acquirente su richiesta (es. cifrati con una chiave che
    il venditore consegna), mantenendo on-chain solo l'impronta.
 
-## 4. Informativa (contenuti da validare prima della pubblicazione)
+## 4. Informativa
 
-Elementi da completare e far verificare (non pubblicata: richiede scelte
-del titolare):
+Pubblicata in [`frontend/privacy.html`](../frontend/privacy.html) il
+16/11/2026, con la stessa impostazione dell'informativa di ChainIntegrate
+Account (repository up-onboarding): stesso titolare, contatti,
+conservazione dei log (massimo 30 giorni) e diritti. Se cambia il
+trattamento (nuovi campi, backup, terze parti) vanno aggiornate insieme
+la pagina, la sua data e questo documento. Elementi coperti:
 
 - titolare: ChainIntegrate (dati societari), contatto info@chainintegrate.it;
 - finalità: tenuta del libretto di manutenzione scelto dall'utente;
