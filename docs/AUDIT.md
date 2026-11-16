@@ -349,12 +349,10 @@ Rilascio del 16/11/2026 sul VPS (dettagli in [OPERATIONS.md](OPERATIONS.md)):
    `ADMIN_UP_ADDRESS`), riavvio PM2; `/api/health` OK;
 3. ✅ vhost Nginx: snippet delle intestazioni incluso solo nel blocco di
    mycarbook (gli altri siti del file condiviso non cambiano),
-   `X-Forwarded-For`, file di servizio a 404. CSP verificata in
-   Report-Only con l'estensione UP: nessuna violazione;
+   `X-Forwarded-For`, file di servizio a 404. CSP verificata prima in
+   Report-Only con l'estensione UP (nessuna violazione), poi applicata;
 4. ✅ ripin dei file sul nodo e controllo giornaliero attivo (MCB-17);
-5. da fare: `ADMIN_SIGNER_ADDRESS=any` in `.env` dopo il merge della PR che
-   introduce la modalità (finché la variabile è vuota il pannello admin non
-   può caricare file); conferma del passaggio della CSP da Report-Only ad
-   applicata;
+5. ✅ `ADMIN_SIGNER_ADDRESS=any` (PR #2): upload admin attivi per la UP
+   owner da qualunque suo controller con permesso SIGN;
 6. ⏳ backup fuori server (rimandato), guida su www.chainintegrate.it,
    informativa privacy.
