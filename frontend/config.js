@@ -29,6 +29,8 @@ const MYCARBOOK_ABI = [
   "function setData(bytes32 dataKey, bytes calldata dataValue) external",
   "function setDataForTokenId(bytes32 tokenId, bytes32 dataKey, bytes calldata dataValue) external",
   "function owner() external view returns (address)",
+  // LSP8: trasferimento all'acquirente (force=false: solo verso UP/contratti che accettano LSP8)
+  "function transfer(address from, address to, bytes32 tokenId, bool force, bytes data) external",
   "event VehicleMinted(bytes32 indexed tokenId, address indexed owner, uint256 registrationDate, uint256 purchaseDate, uint256 km)",
   "event InterventionLogged(bytes32 indexed tokenId, address indexed loggedBy, uint256 date, uint256 km, uint8 categoryFlags, uint256 amountCents, string description)"
 ];

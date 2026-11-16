@@ -1,0 +1,19 @@
+{
+  "name": "mycarbook-tests",
+  "private": true,
+  "description": "Test del frontend (unitari con jsdom, end-to-end con Chromium/Playwright) e strumenti per rigenerare le librerie servite in locale.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test frontend/*.test.mjs e2e/*.test.mjs",
+    "vendor": "node vendor/build-vendor.mjs"
+  },
+  "devDependencies": {
+    "@erc725/erc725.js": "0.28.2",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/oswald": "5.3.0",
+    "esbuild": "0.28.2",
+    "ethers": "6.13.4",
+    "jsdom": "^26.1.0"
+  }
+}

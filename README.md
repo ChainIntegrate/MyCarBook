@@ -17,13 +17,21 @@ mycarbook/
 │   ├── deploy.js           — deploy v1
 │   └── deploy-v2.js        — deploy v2
 ├── backend/
-│   ├── server.js            — proxy verso nodo IPFS personale (non più
-│   │   Pinata) + verifica firma ERC-1271 sugli upload gated
+│   ├── server.js            — avvio; logica in lib/ (app, auth, file, schema)
+│   ├── lib/                 — pin su nodo IPFS proprio con firma ERC-1271
+│   │   legata al contenuto; raccolta CID e operazioni sui pin
+│   ├── scripts/             — check-pins (controllo/ripin/orfani), backup CAR
+│   ├── test/                — test negativi del backend (node --test)
 │   ├── allowed-addresses.json — lista manuale indirizzi autorizzati alla
 │   │   foto veicolo (NON committato, vive solo sul VPS — vedi .gitignore)
 │   └── allowed-addresses.example.json
+├── deploy/                — vhost Nginx + intestazioni di sicurezza (CSP), unità systemd
+├── docs/                  — AUDIT.md (stato dei punti), OPERATIONS.md, PRIVACY.md
+├── tests/                 — test frontend (jsdom) ed end-to-end (Chromium + Nginx)
 └── frontend/
-    ├── index.html            — UI pubblica, vanilla JS, mobile-first, i18n EN/IT
+    ├── index.html            — UI pubblica, vanilla JS (js/app.js), mobile-first, i18n EN/IT
+    ├── js/, css/             — codice e stili (nessuno script/stile inline: CSP)
+    ├── vendor/, fonts/       — ethers, erc725.js e font serviti in locale (SHA256SUMS)
     ├── admin-collection.html — pannello admin (owner contratto): metadata
     │   di collezione + immagine per singolo tokenId
     └── config.js              — indirizzi contratto per rete + ABI
@@ -57,6 +65,8 @@ collegato al frontend.
 
 ### Sicurezza upload gated + storage
 
+> Aggiornato dopo l'audit del 4/11/2026: vedi [docs/AUDIT.md](docs/AUDIT.md).
+
 Fino a poco fa, il controllo "chi può caricare foto/documento" era applicato
 **solo lato UI** (bottone disabilitato) — l'endpoint `/api/pin-file` restava
 comunque chiamabile direttamente da chiunque, bypassando completamente il
@@ -64,26 +74,31 @@ gate. Corretto: ora ogni chiamata a `/api/pin-file` richiede una **firma
 ERC-1271** (stesso pattern già in uso su MatchPredictor v3) che il backend
 verifica prima di autorizzare il pin:
 
-1. Il frontend firma un messaggio con la UP connessa (`purpose`, `address`,
-   `chainId`, `timestamp`) — un tap in più sulla UP, oltre alla firma della
-   transazione vera e propria.
+1. Il frontend firma un messaggio con la UP connessa che contiene dominio,
+   `purpose`, indirizzo, rete, **impronta SHA-256 del file/JSON**, nonce
+   casuale e istante — un tap in più sulla UP, oltre alla transazione.
 2. Il backend verifica la firma via `isValidSignature` (ERC-1271) sulla UP
-   del chiamante, con finestra anti-replay di 5 minuti.
+   del chiamante: valida 5 minuti, **una sola volta**, solo per quel
+   contenuto, solo su mainnet (chainId 42).
 3. Solo dopo, controlla l'autorizzazione in base al `purpose`:
+   - `metadata` (`/api/pin-json`, mint) → qualunque UP, JSON con schema rigido
    - `photo` → lista manuale **o** tier Bronze+
    - `document` → tier Gold
-   - `admin` → deve essere l'owner del contratto (per `admin-collection.html`)
+   - `admin` → UP owner (`ADMIN_UP_ADDRESS`) **e** firma della chiave
+     controller precisa `ADMIN_SIGNER_ADDRESS` (da `.env`)
 
-`/api/pin-json` resta **senza** questo gate — serve anche per il mint base
-(nome/attributes), che è permissionless per design, quindi non ha senso
-richiedere una firma lì. Resta protetto solo dal rate limit, come prima.
+Anche `/api/pin-json` richiede ora la firma (prima era aperto a chiunque).
+Il tipo dei file si ricava dai byte (JPEG/PNG/WebP, PDF solo per i
+documenti); le foto devono arrivare senza EXIF (l'app le ricodifica).
+Rate limit per IP reale (`trust proxy` loopback dietro Nginx).
 
 **Storage**: da Pinata al [nodo IPFS personale](https://ipfs.chainintegrate.it)
 (Kubo, VPS Contabo dedicata, `Gateway.NoFetch=true` — serve solo contenuti
 pinnati da noi). L'API di pin (`:5001`) è raggiungibile solo dall'IP del VPS
-di produzione (whitelist a livello di rete, nessuna API key). Il contenuto
-già pinnato su Pinata resta comunque raggiungibile in lettura (fallback su
-gateway pubblico), solo i nuovi upload vanno sul nodo proprio.
+di produzione (whitelist a livello di rete; supportata anche
+`IPFS_API_AUTH`). Il contenuto pinnato in passato su Pinata **non** è sul
+nodo proprio finché non viene ripinnato con `npm run repin` (MCB-17): fino
+ad allora si legge dal gateway LUKSO di riserva.
 
 ### Feature gating a fasce, tramite ChainIntegrate Membership
 
@@ -118,8 +133,10 @@ gestione manuale confermata come via definitiva per ora.
 
 - **Immagine per singolo tokenId dopo il mint**: gestita da
   `admin-collection.html` (sezione dedicata) — solo l'owner del contratto
-  può farlo, protezione reale on-chain (`setDataForTokenId` è `onlyOwner`).
-  Fa merge col metadata esistente (non sovrascrive marca/modello/targa/VIN).
+  può farlo (`setDataForTokenId` è `onlyOwner`). La pagina fa merge col
+  metadata esistente, ma il contratto permette all'owner di sostituire
+  l'intera scheda di qualunque veicolo, e il proprietario del veicolo non
+  può correggerla da solo (MCB-04, da risolvere col prossimo contratto).
 
 - **Metadata di collezione** (icona/banner/descrizione, visibili su
   universaleverything.io a livello di collezione): stessa pagina
@@ -142,9 +159,9 @@ gestione manuale confermata come via definitiva per ora.
 - Elemento firma: ogni intervento è renderizzato come un "timbro" di
   libretto (badge circolare tratteggiato con la data), coerente col nome
   del prodotto.
-- `erc725.js` va importato come modulo ES via `esm.sh` (`import { ERC725 }
-  from "https://esm.sh/@erc725/erc725.js@0.28.2"`) — il bundle CommonJS su
-  jsDelivr non espone un global utilizzabile da `<script>` classico.
+- `erc725.js` è un bundle ESM generato in locale (`frontend/vendor/`,
+  `cd tests && npm run vendor`), non più da esm.sh: la CSP ammette solo
+  codice servito dal sito.
 - Owner del contratto (branding/metadata) e deployer (chi paga il gas) sono
   sempre indirizzi separati per disciplina, su entrambe le reti.
 
@@ -154,3 +171,9 @@ gestione manuale confermata come via definitiva per ora.
   nuovo deploy con ruoli separati, non ritenuto necessario per ora).
 - Nessuna cifratura di alcun dato — scelta esplicita, coerente con l'uso
   in fase di rivendita (storico verificabile da un futuro acquirente).
+## Test
+
+```
+cd backend && npm ci && npm test      # backend: firma, schema, file, rate limit, pin IPFS
+cd tests && npm ci && npm test        # frontend (jsdom) + end-to-end (Chromium, Nginx reale)
+```

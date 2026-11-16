@@ -9,7 +9,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="MyCarBook" />
 <meta property="og:title" content="MyCarBook — On-chain vehicle logbook" />
-<meta property="og:description" content="Log every service on your vehicle, on-chain, straight from your Universal Profile. No issuer, no backend — you own the record." />
+<meta property="og:description" content="Log every service on your vehicle, on-chain, straight from your Universal Profile. No certifying body: the record is written by you and stays with the vehicle." />
 <meta property="og:image" content="https://mycarbook.chainintegrate.it/banner.png" />
 <meta property="og:url" content="https://mycarbook.chainintegrate.it" />
 <meta property="og:locale" content="en_US" />
@@ -25,313 +25,15 @@
 <link rel="icon" href="favicon.ico" sizes="any" />
 <link rel="apple-touch-icon" sizes="180x180" href="apple_touch_icon.png" />
 
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<!-- Font, CSS e librerie serviti dal nostro dominio (nessun CDN, audit MCB-16). -->
+<link rel="stylesheet" href="css/fonts.css" />
+<link rel="stylesheet" href="css/app.css" />
 
-<!-- ethers v6 (UMD) -->
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<!-- ethers v6 (UMD), copia invariata del pacchetto npm 6.13.4: vedi vendor/SHA256SUMS -->
+<script src="vendor/ethers-6.13.4.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"></script>
 
 <script src="config.js"></script>
 
-<style>
-  :root{
-    /* --- Token system: officina / libretto di manutenzione --- */
-    --bg:            #10181A;   /* nero-petrolio, fondo officina di notte */
-    --surface:       #1A2528;   /* pannello/scheda */
-    --surface-raised:#213033;
-    --line:          #2C3D40;
-    --ink:           #EDE7DD;   /* bianco-carta */
-    --ink-muted:     #9AA6A5;
-    --brass:         #C08552;   /* ottone, accento primario — timbri, CTA */
-    --brass-dim:      #8C6440;
-    --motor-green:   #4E7C6B;   /* verde motore, stato positivo/conferme */
-    --danger:        #C0654F;
-
-    --display: "Oswald", sans-serif;
-    --body: "Inter", sans-serif;
-    --mono: "JetBrains Mono", monospace;
-  }
-
-  *{ box-sizing:border-box; }
-  html,body{ margin:0; padding:0; }
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:var(--body);
-    min-height:100vh;
-    padding-bottom:3rem;
-  }
-  body::before{
-    content:"";
-    position:fixed; inset:0;
-    background-image:repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
-    pointer-events:none;
-  }
-
-  h1,h2,h3{
-    font-family:var(--display);
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-    margin:0;
-  }
-
-  .mono{ font-family:var(--mono); }
-
-  header{
-    position:sticky; top:0; z-index:10;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:1rem 1.25rem;
-    background:rgba(16,24,26,0.92);
-    backdrop-filter:blur(6px);
-    border-bottom:1px solid var(--line);
-    gap:0.6rem;
-  }
-  .wordmark{ font-size:1.15rem; color:var(--ink); display:flex; align-items:center; gap:0.5rem; }
-  .wordmark span{ color:var(--brass); }
-  .wordmark-icon{ height:32px; width:32px; border-radius:8px; display:block; }
-
-  .powered-by-strip{
-  display:flex; align-items:center; justify-content:center; gap:0.6rem;
-  padding:0.75rem 0;
-  font-family:var(--mono); font-size:0.85rem; letter-spacing:0.04em;
-  color:var(--ink-muted);
-  background:var(--surface);
-  border-bottom:1px solid var(--line);
-}
-.powered-by-icon{ height:56px; width:56px; border-radius:50%; object-fit:cover; display:block; }
-
-
-  .header-actions{ display:flex; align-items:center; gap:0.5rem; }
-
-  .wallet-chip{
-    font-family:var(--mono);
-    font-size:0.75rem;
-    color:var(--ink-muted);
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:0.4rem 0.75rem;
-    cursor:pointer;
-  }
-  .wallet-chip.connected{ color:var(--motor-green); border-color:var(--motor-green); }
-
-  .lang-toggle{
-    font-family:var(--mono);
-    font-size:0.72rem;
-    font-weight:700;
-    letter-spacing:0.05em;
-    color:var(--ink-muted);
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:0.4rem 0.65rem;
-    cursor:pointer;
-  }
-  .lang-toggle:hover{ border-color:var(--brass-dim); color:var(--ink); }
-
-  .connect-row{
-    padding:0.6rem 1.25rem;
-    background:rgba(16,24,26,0.92);
-    border-bottom:1px solid var(--line);
-  }
-  .connect-row .wallet-chip{
-    width:100%;
-    text-align:center;
-    padding:0.6rem 0.75rem;
-  }
-
-  main{ max-width:560px; margin:0 auto; padding:1.25rem; }
-
-  .btn{
-    font-family:var(--body);
-    font-weight:600;
-    font-size:0.95rem;
-    border:none;
-    border-radius:8px;
-    padding:0.85rem 1.1rem;
-    cursor:pointer;
-    width:100%;
-  }
-  .btn-primary{ background:var(--brass); color:#1A1108; }
-  .btn-primary:disabled{ background:var(--brass-dim); color:#453423; cursor:not-allowed; }
-  .btn-ghost{ background:transparent; color:var(--ink-muted); border:1px solid var(--line); }
-  .btn-danger-outline{ background:transparent; color:var(--danger); border:1px solid var(--danger); }
-
-  .empty-state{
-    text-align:center;
-    padding:3rem 1rem;
-    color:var(--ink-muted);
-  }
-  .empty-state h2{ color:var(--ink); font-size:1.1rem; margin-bottom:0.5rem; }
-
-  .vehicle-card{
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:1rem;
-    margin-bottom:0.85rem;
-    display:flex; gap:0.85rem; align-items:center;
-    cursor:pointer;
-  }
-  .vehicle-card:hover{ border-color:var(--brass-dim); }
-  .vehicle-thumb{
-    width:56px; height:56px; border-radius:8px;
-    background:var(--surface-raised) center/cover no-repeat;
-    flex-shrink:0;
-    display:flex; align-items:center; justify-content:center;
-    color:var(--ink-muted); font-size:1.4rem;
-  }
-  .vehicle-card-body{ flex:1; min-width:0; }
-  .vehicle-card-name{ font-family:var(--display); text-transform:uppercase; letter-spacing:0.04em; font-size:1rem; }
-  .vehicle-card-meta{ font-family:var(--mono); font-size:0.78rem; color:var(--ink-muted); margin-top:0.2rem; }
-
-  .fab-row{ margin-top:1.5rem; }
-
-  .field{ margin-bottom:1rem; }
-  .field label{
-    display:block; font-size:0.75rem; text-transform:uppercase;
-    letter-spacing:0.05em; color:var(--ink-muted); margin-bottom:0.35rem;
-  }
-  .field input, .field textarea{
-    width:100%;
-    background:var(--surface);
-    border:1px solid var(--line);
-    color:var(--ink);
-    border-radius:8px;
-    padding:0.75rem 0.85rem;
-    font-family:var(--body);
-    font-size:0.95rem;
-  }
-  .field input.mono, .field textarea.mono{ font-family:var(--mono); }
-  .field textarea{ resize:vertical; min-height:5rem; }
-  .field-hint{ font-size:0.72rem; color:var(--ink-muted); margin-top:0.3rem; }
-  .field-hint.warn{ color:var(--brass); }
-  .field-row{ display:flex; gap:0.75rem; }
-  .field-row .field{ flex:1; }
-
-  .back-link{
-    display:inline-flex; align-items:center; gap:0.4rem;
-    color:var(--ink-muted); font-size:0.85rem;
-    background:none; border:none; cursor:pointer;
-    margin-bottom:1rem; padding:0;
-  }
-
-  .confirm-box{
-    background:var(--surface-raised);
-    border:1px dashed var(--brass-dim);
-    border-radius:10px;
-    padding:1rem;
-    margin:1rem 0;
-  }
-  .confirm-box h3{ font-size:0.85rem; color:var(--brass); margin-bottom:0.6rem; }
-  .confirm-row{
-    display:flex; justify-content:space-between;
-    font-family:var(--mono); font-size:0.82rem;
-    padding:0.3rem 0; border-bottom:1px solid var(--line);
-  }
-  .confirm-row:last-child{ border-bottom:none; }
-  .confirm-row .k{ color:var(--ink-muted); }
-
-  .odometer{
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:1.25rem;
-    text-align:center;
-    margin-bottom:1.25rem;
-  }
-  .odometer .km{
-    font-family:var(--mono);
-    font-size:2.2rem;
-    font-weight:700;
-    color:var(--brass);
-    letter-spacing:0.05em;
-  }
-  .odometer .km-label{ font-size:0.7rem; color:var(--ink-muted); text-transform:uppercase; letter-spacing:0.08em; margin-top:0.2rem; }
-  .vehicle-attrs{
-    display:flex; flex-wrap:wrap; gap:0.4rem;
-    justify-content:center; margin-top:0.85rem;
-  }
-  .attr-pill{
-    font-family:var(--mono); font-size:0.72rem;
-    background:var(--surface-raised); color:var(--ink-muted);
-    border-radius:999px; padding:0.25rem 0.65rem;
-  }
-
-  .stats-card{
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:1.1rem 1.25rem;
-    margin-bottom:1.25rem;
-  }
-  .stats-card h3{
-    font-size:0.85rem;
-    color:var(--brass);
-    margin-bottom:0.75rem;
-  }
-  .stats-section{ margin-top:0.9rem; }
-  .stats-section:first-child{ margin-top:0; }
-  .stats-section-label{
-    font-family:var(--mono); font-size:0.68rem; color:var(--ink-muted);
-    text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;
-  }
-  .stats-row{
-    display:flex; justify-content:space-between; align-items:center;
-    font-size:0.85rem; padding:0.3rem 0;
-    border-bottom:1px solid var(--line);
-  }
-  .stats-row:last-child{ border-bottom:none; }
-  .stats-row .stats-k{ color:var(--ink-muted); }
-  .stats-row .stats-v{ font-family:var(--mono); color:var(--ink); }
-  .stats-row .stats-v.highlight{ color:var(--brass); font-weight:600; }
-  .stats-empty{ font-size:0.8rem; color:var(--ink-muted); font-style:italic; }
-
-  .timeline{ position:relative; padding-left:1.6rem; margin-top:1.5rem; }
-  .timeline::before{
-    content:""; position:absolute; left:0.55rem; top:0.3rem; bottom:0.3rem;
-    width:1px; background:var(--line);
-  }
-  .stamp-entry{ position:relative; margin-bottom:1.6rem; }
-  .stamp-badge{
-    position:absolute; left:-1.6rem; top:0;
-    width:2.4rem; height:2.4rem; border-radius:50%;
-    border:2px dashed var(--brass-dim);
-    display:flex; align-items:center; justify-content:center;
-    transform:rotate(-6deg);
-    background:var(--bg);
-  }
-  .stamp-badge .d{ font-family:var(--mono); font-size:0.48rem; color:var(--brass); line-height:1.15; text-align:center; }
-  .stamp-card{
-    margin-left:1.4rem;
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:0.9rem 1rem;
-  }
-  .stamp-card .desc{ font-size:0.92rem; margin-bottom:0.5rem; }
-  .stamp-card .meta{
-    display:flex; gap:1rem; flex-wrap:wrap;
-    font-family:var(--mono); font-size:0.75rem; color:var(--ink-muted);
-  }
-
-  .toast{
-    position:fixed; left:50%; bottom:1.5rem; transform:translateX(-50%);
-    background:var(--surface-raised); border:1px solid var(--line);
-    color:var(--ink); padding:0.7rem 1.1rem; border-radius:8px;
-    font-size:0.85rem; max-width:90vw; text-align:center;
-    z-index:50;
-  }
-  .toast.error{ border-color:var(--danger); color:var(--danger); }
-  .toast.success{ border-color:var(--motor-green); color:var(--motor-green); font-weight:600; }
-
-  [hidden]{ display:none !important; }
-
-  @media (prefers-reduced-motion: reduce){
-    *{ animation:none !important; transition:none !important; }
-  }
-</style>
 </head>
 <body>
 
@@ -341,7 +43,7 @@
     My<span>Car</span>Book
   </div>
   <div class="header-actions">
-    <a href="how-it-works.html" class="lang-toggle" style="text-decoration:none; display:inline-flex; align-items:center;" data-i18n="navHowItWorks">How it works</a>
+    <a href="how-it-works.html" class="lang-toggle nav-link" data-i18n="navHowItWorks">How it works</a>
     <button class="lang-toggle" id="btn-lang">IT</button>
   </div>
 </header>
@@ -365,10 +67,12 @@
 
     <div id="list-not-connected" class="empty-state">
       <h2 data-i18n="notConnectedTitle">Connect your Universal Profile</h2>
-      <p data-i18n="notConnectedDesc">Your vehicles and their history are visible only to you, once you connect your UP.</p>
+      <p data-i18n="notConnectedDesc">Connect your UP to see and manage your vehicles. Keep in mind that what you register here (plate and VIN included) is public and permanent: anyone can read it, not only you.</p>
     </div>
 
     <div id="vehicle-list"></div>
+
+    <button class="link-button" id="btn-show-hidden" hidden></button>
 
     <div class="fab-row">
       <button class="btn btn-primary" id="btn-new-vehicle" data-i18n="addVehicleBtn" hidden>+ Add vehicle</button>
@@ -377,38 +81,46 @@
 
   <section id="view-mint" hidden>
     <button class="back-link" data-nav="list" data-i18n="backBtn">‹ Back</button>
-    <h2 style="margin-bottom:1rem;" data-i18n="mintTitle">New vehicle</h2>
+    <h2 class="section-title" data-i18n="mintTitle">New vehicle</h2>
 
     <div class="field">
       <label for="f-name" data-i18n="labelName">Vehicle name</label>
-      <input type="text" id="f-name" data-i18n-ph="placeholderName" placeholder="E.g. My Panda" maxlength="100" />
+      <input type="text" id="f-name" data-i18n-ph="placeholderName" placeholder="E.g. My Panda" maxlength="100" autocomplete="off" />
     </div>
 
     <div class="field-row">
       <div class="field">
         <label for="f-brand" data-i18n="labelBrand">Brand</label>
-        <input type="text" id="f-brand" placeholder="Fiat" />
+        <input type="text" id="f-brand" placeholder="Fiat" maxlength="64" autocomplete="off" />
       </div>
       <div class="field">
         <label for="f-model" data-i18n="labelModel">Model</label>
-        <input type="text" id="f-model" placeholder="Panda" />
+        <input type="text" id="f-model" placeholder="Panda" maxlength="64" autocomplete="off" />
       </div>
     </div>
     <div class="field-row">
       <div class="field">
         <label for="f-trim" data-i18n="labelTrim">Trim</label>
-        <input type="text" id="f-trim" placeholder="Easy" />
+        <input type="text" id="f-trim" placeholder="Easy" maxlength="64" autocomplete="off" />
       </div>
       <div class="field">
         <label for="f-plate" data-i18n="labelPlate">Plate</label>
-        <input type="text" id="f-plate" class="mono" placeholder="AB123CD" />
+        <input type="text" id="f-plate" class="mono" placeholder="AB123CD" maxlength="64" autocomplete="off" />
       </div>
     </div>
     <div class="field">
       <label for="f-vin" data-i18n="labelVin">VIN</label>
-      <input type="text" id="f-vin" class="mono" placeholder="ZFA..." />
+      <input type="text" id="f-vin" class="mono" placeholder="ZFA..." maxlength="64" autocomplete="off" />
     </div>
     <p class="field-hint" id="hint-attrs" data-i18n="hintAttrs">Fill in at least one of brand, model, trim, plate, or VIN.</p>
+    <div class="notice-public">
+      <p data-i18n="hintIdentityPublic">Plate and VIN are optional. If you enter them they become public and permanent: anyone can read them and connect them to your Universal Profile, and they can't be deleted. Leave them empty unless you need them (e.g. to show the history to a buyer).</p>
+      <a href="how-it-works.html#privacy" target="_blank" rel="noopener" data-i18n="linkLearnMore">what does this mean?</a>
+      <label class="ack-label" id="identity-ack-row" hidden>
+        <input type="checkbox" id="i-identity-privacy-ack" />
+        <span data-i18n="ackIdentityPublic">I understand that plate and VIN will be public and permanent.</span>
+      </label>
+    </div>
 
     <div class="field-row">
       <div class="field">
@@ -422,21 +134,22 @@
     </div>
     <div class="field">
       <label for="f-km" data-i18n="labelKm">Current mileage (km)</label>
-      <input type="number" id="f-km" class="mono" min="0" step="1" placeholder="0" />
+      <input type="number" id="f-km" class="mono" min="0" max="2000000" step="1" placeholder="0" />
       <p class="field-hint" data-i18n="hintKmZero">0 is a valid value (e.g. brand new vehicle).</p>
     </div>
 
     <div class="field" id="photo-upload-section">
       <label for="f-photo" data-i18n="labelPhoto">Vehicle photo (optional)</label>
-      <input type="file" id="f-photo" accept="image/*" disabled />
+      <input type="file" id="f-photo" accept="image/jpeg,image/png,image/webp" disabled />
       <p class="field-hint" data-i18n="hintPhoto">Square image, ideally under 800px per side.</p>
       <p class="field-hint warn" id="photo-locked-hint" data-i18n="hintPhotoLocked">Write to info@chainintegrate.it to enable this feature.</p>
+      <button type="button" class="link-button" id="btn-check-photo-access" data-i18n="checkPhotoAccessBtn" hidden>Are you on the access list? Check</button>
       <p class="field-hint">
         <span data-i18n="hintPhotoPublic">This photo will be publicly retrievable forever, by anyone who reads the vehicle's history —</span>
         <a href="how-it-works.html#privacy" target="_blank" rel="noopener" data-i18n="linkLearnMore">what does this mean?</a>
       </p>
-      <label style="display:flex; align-items:flex-start; gap:0.4rem; font-size:0.8rem; font-weight:400; text-transform:none; margin-top:0.4rem; cursor:pointer;">
-        <input type="checkbox" id="i-photo-privacy-ack" style="margin-top:0.15rem;" />
+      <label class="ack-label">
+        <input type="checkbox" id="i-photo-privacy-ack" />
         <span data-i18n="ackPhotoPublic">I understand this photo will be public and permanent.</span>
       </label>
     </div>
@@ -449,9 +162,9 @@
   <section id="view-detail" hidden>
     <button class="back-link" data-nav="list" data-i18n="backToVehicles">‹ My vehicles</button>
 
-    <img id="detail-photo" src="" alt="" hidden style="width:100%;max-width:320px;aspect-ratio:1;object-fit:cover;border-radius:12px;display:block;margin:0 auto 1rem;border:1px solid var(--line);" />
+    <img id="detail-photo" class="detail-photo" alt="" hidden />
 
-    <h2 id="detail-name" style="margin-bottom:0.75rem;"></h2>
+    <h2 id="detail-name" class="detail-name"></h2>
 
     <div class="odometer">
       <div class="km mono" id="detail-km">—</div>
@@ -459,17 +172,32 @@
       <div class="vehicle-attrs" id="detail-attrs"></div>
     </div>
 
+    <p class="self-declared" data-i18n="selfDeclaredNote">Data entered by the vehicle's owners, not verified by anyone.</p>
+
     <div id="vehicle-stats"></div>
 
     <button class="btn btn-primary" id="btn-new-intervention" data-i18n="addInterventionBtn">+ Log service</button>
 
     <div class="timeline" id="intervention-timeline"></div>
     <p class="empty-state" id="timeline-empty" data-i18n="noInterventions" hidden>No service logged yet.</p>
+
+    <div class="detail-actions">
+      <button class="btn btn-ghost" id="btn-transfer" data-i18n="transferBtn">Transfer to the buyer</button>
+      <button class="btn btn-ghost" id="btn-hide-vehicle" data-i18n="hideVehicleBtn">Hide from my list</button>
+    </div>
+    <div class="confirm-box transfer-box" id="transfer-box" hidden>
+      <p class="field-hint" data-i18n="transferHint">Enter the buyer's Universal Profile address. The vehicle and its whole history move to them and you won't be able to log services anymore. This can't be undone.</p>
+      <div class="field">
+        <label for="f-transfer-to" data-i18n="labelTransferTo">Buyer's Universal Profile address</label>
+        <input type="text" id="f-transfer-to" class="mono" placeholder="0x…" maxlength="42" autocomplete="off" />
+      </div>
+      <button class="btn btn-danger-outline" id="btn-transfer-confirm" data-i18n="confirmTransferBtn">Confirm and sign the transfer</button>
+    </div>
   </section>
 
   <section id="view-intervention" hidden>
     <button class="back-link" data-nav="detail" data-i18n="backBtn">‹ Back</button>
-    <h2 style="margin-bottom:1rem;" data-i18n="interventionTitle">New service entry</h2>
+    <h2 class="section-title" data-i18n="interventionTitle">New service entry</h2>
 
     <div class="field-row">
       <div class="field">
@@ -479,7 +207,7 @@
       </div>
       <div class="field">
         <label for="i-km" data-i18n="labelKmShort">Mileage (km)</label>
-        <input type="number" id="i-km" class="mono" min="0" step="1" placeholder="0" />
+        <input type="number" id="i-km" class="mono" min="0" max="2000000" step="1" placeholder="0" />
       </div>
     </div>
     <div class="field">
@@ -490,32 +218,33 @@
       <label for="i-desc" data-i18n="labelDesc">Description</label>
       <textarea id="i-desc" maxlength="280" data-i18n-ph="placeholderDesc" placeholder="E.g. Service, oil and filters changed, brakes checked."></textarea>
       <p class="field-hint" id="i-desc-count">0 / 280</p>
+      <p class="field-hint warn" data-i18n="hintDescPublic">Date, mileage, amount and description are written on the blockchain: public and permanent, they can't be edited or deleted. Don't write names, addresses or other personal details.</p>
     </div>
 
     <div class="field" id="category-section">
       <label data-i18n="labelCategories">Category (optional, multiple allowed)</label>
-      <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.4rem;">
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="1" disabled /> <span data-i18n="catMechanical">Mechanical</span></label>
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="2" disabled /> <span data-i18n="catBodywork">Bodywork</span></label>
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="4" disabled /> <span data-i18n="catTires">Tires</span></label>
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="8" disabled /> <span data-i18n="catElectrical">Electrical</span></label>
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="16" disabled /> <span data-i18n="catCleaning">Cleaning</span></label>
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; font-weight:400; text-transform:none;"><input type="checkbox" class="i-category" value="32" disabled /> <span data-i18n="catOther">Other</span></label>
+      <div class="category-row">
+        <label class="category-label"><input type="checkbox" class="i-category" value="1" disabled /> <span data-i18n="catMechanical">Mechanical</span></label>
+        <label class="category-label"><input type="checkbox" class="i-category" value="2" disabled /> <span data-i18n="catBodywork">Bodywork</span></label>
+        <label class="category-label"><input type="checkbox" class="i-category" value="4" disabled /> <span data-i18n="catTires">Tires</span></label>
+        <label class="category-label"><input type="checkbox" class="i-category" value="8" disabled /> <span data-i18n="catElectrical">Electrical</span></label>
+        <label class="category-label"><input type="checkbox" class="i-category" value="16" disabled /> <span data-i18n="catCleaning">Cleaning</span></label>
+        <label class="category-label"><input type="checkbox" class="i-category" value="32" disabled /> <span data-i18n="catOther">Other</span></label>
       </div>
       <p class="field-hint warn" id="category-locked-hint" data-i18n="hintCategoryLocked">Requires Silver membership or above.</p>
     </div>
 
     <div class="field" id="document-upload-section">
       <label for="f-document" data-i18n="labelDocument">Document (optional)</label>
-      <input type="file" id="f-document" accept="image/*,application/pdf" disabled />
+      <input type="file" id="f-document" accept="image/jpeg,image/png,image/webp,application/pdf" disabled />
       <p class="field-hint" data-i18n="hintDocument">Invoice or other service document.</p>
       <p class="field-hint warn" id="document-locked-hint" data-i18n="hintDocumentLocked">Requires Gold membership.</p>
       <p class="field-hint">
         <span data-i18n="hintDocumentPublic">This document will be publicly retrievable forever, by anyone who reads the vehicle's history — don't attach anything showing details you'd want to keep private (e.g. your home address).</span>
         <a href="how-it-works.html#privacy" target="_blank" rel="noopener" data-i18n="linkLearnMore">what does this mean?</a>
       </p>
-      <label style="display:flex; align-items:flex-start; gap:0.4rem; font-size:0.8rem; font-weight:400; text-transform:none; margin-top:0.4rem; cursor:pointer;">
-        <input type="checkbox" id="i-document-privacy-ack" style="margin-top:0.15rem;" />
+      <label class="ack-label">
+        <input type="checkbox" id="i-document-privacy-ack" />
         <span data-i18n="ackDocumentPublic">I understand this document will be public and permanent.</span>
       </label>
     </div>
@@ -527,1193 +256,11 @@
 
 </main>
 
-<script type="module">
-"use strict";
-
-// erc725.js non pubblica un bundle UMD col global window.ERC725 — va
-// importato come modulo ES. esm.sh ricompila qualunque pacchetto npm in un
-// bundle browser-compatibile, a differenza di jsDelivr che serve il file
-// così com'è pubblicato (CommonJS, inutilizzabile con un <script> classico).
-import { ERC725 } from "https://esm.sh/@erc725/erc725.js@0.28.2";
-
-const I18N = {
-  en: {
-    walletConnect: "Connect UP",
-    navHowItWorks: "How it works",
-    poweredBy: "Powered by",
-    emptyVehiclesTitle: "No vehicles yet",
-    emptyVehiclesDesc: "Register your first car: from here on, every service stays written, on your Universal Profile.",
-    notConnectedTitle: "Connect your Universal Profile",
-    notConnectedDesc: "Your vehicles and their history are visible only to you, once you connect your UP.",
-    addVehicleBtn: "+ Add vehicle",
-    backBtn: "‹ Back",
-    mintTitle: "New vehicle",
-    labelName: "Vehicle name",
-    placeholderName: "E.g. My Panda",
-    labelBrand: "Brand",
-    labelModel: "Model",
-    labelTrim: "Trim",
-    labelPlate: "Plate",
-    labelVin: "VIN",
-    hintAttrs: "Fill in at least one of brand, model, trim, plate, or VIN.",
-    labelRegDate: "Registration date",
-    labelPurchaseDate: "Ownership date",
-    labelKm: "Current mileage (km)",
-    hintKmZero: "0 is a valid value (e.g. brand new vehicle).",
-    reviewBtn: "Review and sign",
-    labelPhoto: "Vehicle photo (optional)",
-    hintPhotoPublic: "This photo will be publicly retrievable forever, by anyone who reads the vehicle's history —",
-    ackPhotoPublic: "I understand this photo will be public and permanent.",
-    toastPhotoAckRequired: "Please check the box confirming you understand the photo will be public before continuing.",
-    hintDocumentPublic: "This document will be publicly retrievable forever, by anyone who reads the vehicle's history — don't attach anything showing details you'd want to keep private (e.g. your home address).",
-    ackDocumentPublic: "I understand this document will be public and permanent.",
-    toastDocumentAckRequired: "Please check the box confirming you understand the document will be public before continuing.",
-    linkLearnMore: "what does this mean?",
-    hintPhoto: "Square image, ideally under 800px per side.",
-    hintPhotoLocked: "Requires a ChainIntegrate membership (Bronze or above), or write to info@chainintegrate.it.",
-    labelCategories: "Category (optional, multiple allowed)",
-    catMechanical: "Mechanical",
-    catBodywork: "Bodywork",
-    catTires: "Tires",
-    catElectrical: "Electrical",
-    catCleaning: "Cleaning",
-    catOther: "Other",
-    hintCategoryLocked: "Requires a ChainIntegrate membership (Silver or above), or write to info@chainintegrate.it.",
-    labelDocument: "Document (optional)",
-    hintDocument: "Invoice or other service document.",
-    hintDocumentLocked: "Requires a ChainIntegrate membership (Gold), or write to info@chainintegrate.it.",
-    rowCategories: "Categories",
-    rowDocument: "Document",
-    viewDocument: "View document",
-    toastDescTooLongWithDoc: "Description too long once the document link is added — shorten it.",
-    toastPhotoTooBig: "Image too large (max 5MB).",
-    toastPhotoUploadFailed: "Photo upload failed, vehicle registered without photo.",
-    confirmTitle: "Check before signing",
-    rowName: "Name",
-    rowBrandModel: "Brand / Model",
-    rowTrim: "Trim",
-    rowPlate: "Plate",
-    rowVin: "VIN",
-    rowRegDate: "Registration",
-    rowPurchaseDate: "Owned since",
-    rowKm: "Current mileage",
-    confirmSignBtn: "Confirm and sign with UP",
-    backToVehicles: "‹ My vehicles",
-    kmLabel: "km registered",
-    addInterventionBtn: "+ Log service",
-    noInterventions: "No service logged yet.",
-    interventionTitle: "New service entry",
-    labelDate: "Service date",
-    hintPastDate: "You can also enter a past date.",
-    labelKmShort: "Mileage (km)",
-    labelAmount: "Amount (€, optional)",
-    labelDesc: "Description",
-    placeholderDesc: "E.g. Service, oil and filters changed, brakes checked.",
-    rowDate: "Date",
-    rowKmIntervention: "Mileage",
-    rowAmount: "Amount",
-    rowDesc: "Description",
-    amountNotSpecified: "not specified",
-    toastNoUp: "No Universal Profile detected. Open MyCarBook from your UP's browser.",
-    toastNetworkUnsupported: "Unsupported network. Switch to LUKSO (mainnet or testnet) from your UP.",
-    toastNoContract: "Contract address not configured for this network.",
-    toastConnectFailed: "Connection cancelled or failed.",
-    toastLoadVehiclesError: "Error loading vehicles.",
-    toastFillOneField: "Fill in at least one vehicle detail (brand, model, trim, plate, or VIN).",
-    toastDatesRequired: "Registration date and ownership date are required.",
-    toastKmRequired: "Enter the current mileage (0 is valid too).",
-    toastTxSent: "Transaction sent, waiting for confirmation…",
-    toastVehicleRegistered: "Vehicle registered.",
-    toastTxFailed: "Signature cancelled or transaction failed.",
-    toastLoadHistoryError: "Error loading service history.",
-    statsTitle: "Statistics",
-    statsTotalInterventions: "Total services logged",
-    statsTotalSpend: "Total spend",
-    statsAmountSpecifiedFor: "Amount specified for {n} of {total}",
-    statsThisYearSpend: "Spend this year ({year})",
-    statsSpendByYear: "Spend by year",
-    statsSpendByCategory: "Spend by category",
-    statsAvgCost: "Average cost per service",
-    statsNoSpendData: "No amounts logged yet.",
-    statsNoCategoryData: "No categories logged yet.",
-    toastDateRequired: "Enter the service date.",
-    toastKmRequiredIntervention: "Enter the mileage at the time of service.",
-    toastDescRequired: "Add a description of the service.",
-    toastDescTooLong: "Description too long (max {max} characters).",
-    toastInterventionRegistered: "Service entry registered.",
-    defaultVehicleName: "Vehicle",
-    unnamedVehicle: "Unnamed vehicle",
-    localeCode: "en-GB"
-  },
-  it: {
-    walletConnect: "Connetti UP",
-    navHowItWorks: "Come funziona",
-    poweredBy: "Powered by",
-    emptyVehiclesTitle: "Nessun veicolo",
-    emptyVehiclesDesc: "Registra la tua prima auto: da qui in poi ogni intervento resta scritto, sulla tua Universal Profile.",
-    notConnectedTitle: "Connetti la tua Universal Profile",
-    notConnectedDesc: "I tuoi veicoli e il relativo storico sono visibili solo a te, collegando la tua UP.",
-    addVehicleBtn: "+ Aggiungi veicolo",
-    backBtn: "‹ Indietro",
-    mintTitle: "Nuovo veicolo",
-    labelName: "Nome del veicolo",
-    placeholderName: "Es. La mia Panda",
-    labelBrand: "Marca",
-    labelModel: "Modello",
-    labelTrim: "Allestimento",
-    labelPlate: "Targa",
-    labelVin: "VIN",
-    hintAttrs: "Compila almeno uno tra marca, modello, allestimento, targa, VIN.",
-    labelRegDate: "Data immatricolazione",
-    labelPurchaseDate: "Data di possesso",
-    labelKm: "Km attuali",
-    hintKmZero: "0 è un valore valido (es. veicolo nuovo).",
-    reviewBtn: "Rivedi e firma",
-    labelPhoto: "Foto veicolo (opzionale)",
-    hintPhotoPublic: "Questa foto sarà recuperabile pubblicamente per sempre, da chiunque legga lo storico del veicolo —",
-    ackPhotoPublic: "Ho capito che questa foto sarà pubblica e permanente.",
-    toastPhotoAckRequired: "Spunta la casella per confermare di aver capito che la foto sarà pubblica, prima di continuare.",
-    hintDocumentPublic: "Questo documento sarà recuperabile pubblicamente per sempre, da chiunque legga lo storico del veicolo — non allegare nulla che mostri dati che vorresti restassero privati (es. il tuo indirizzo di casa).",
-    ackDocumentPublic: "Ho capito che questo documento sarà pubblico e permanente.",
-    toastDocumentAckRequired: "Spunta la casella per confermare di aver capito che il documento sarà pubblico, prima di continuare.",
-    linkLearnMore: "cosa significa?",
-    hintPhoto: "Immagine quadrata, idealmente sotto gli 800px di lato.",
-    hintPhotoLocked: "Richiede una membership ChainIntegrate (Bronze o superiore), oppure scrivi a info@chainintegrate.it.",
-    labelCategories: "Categoria (opzionale, selezione multipla)",
-    catMechanical: "Meccanica",
-    catBodywork: "Carrozzeria",
-    catTires: "Gomme",
-    catElectrical: "Elettrico",
-    catCleaning: "Pulizia",
-    catOther: "Altro",
-    hintCategoryLocked: "Richiede una membership ChainIntegrate (Silver o superiore), oppure scrivi a info@chainintegrate.it.",
-    labelDocument: "Documento (opzionale)",
-    hintDocument: "Fattura o altro documento dell'intervento.",
-    hintDocumentLocked: "Richiede una membership ChainIntegrate (Gold), oppure scrivi a info@chainintegrate.it.",
-    rowCategories: "Categorie",
-    rowDocument: "Documento",
-    viewDocument: "Vedi documento",
-    toastDescTooLongWithDoc: "Descrizione troppo lunga una volta aggiunto il link al documento — accorciala.",
-    toastPhotoTooBig: "Immagine troppo grande (max 5MB).",
-    toastPhotoUploadFailed: "Upload foto non riuscito, veicolo registrato senza foto.",
-    confirmTitle: "Verifica prima di firmare",
-    rowName: "Nome",
-    rowBrandModel: "Marca / Modello",
-    rowTrim: "Allestimento",
-    rowPlate: "Targa",
-    rowVin: "VIN",
-    rowRegDate: "Immatricolazione",
-    rowPurchaseDate: "Possesso dal",
-    rowKm: "Km attuali",
-    confirmSignBtn: "Conferma e firma con la UP",
-    backToVehicles: "‹ I miei veicoli",
-    kmLabel: "km registrati",
-    addInterventionBtn: "+ Registra intervento",
-    noInterventions: "Nessun intervento registrato ancora.",
-    interventionTitle: "Nuovo intervento",
-    labelDate: "Data intervento",
-    hintPastDate: "Puoi indicare anche una data passata.",
-    labelKmShort: "Km",
-    labelAmount: "Importo (€, opzionale)",
-    labelDesc: "Descrizione",
-    placeholderDesc: "Es. Tagliando, sostituito olio e filtri, controllati freni.",
-    rowDate: "Data",
-    rowKmIntervention: "Km",
-    rowAmount: "Importo",
-    rowDesc: "Descrizione",
-    amountNotSpecified: "non specificato",
-    toastNoUp: "Nessuna Universal Profile rilevata. Apri MyCarBook dal browser della tua UP.",
-    toastNetworkUnsupported: "Rete non supportata. Passa a LUKSO (mainnet o testnet) dalla tua UP.",
-    toastNoContract: "Indirizzo contratto non configurato per questa rete.",
-    toastConnectFailed: "Connessione annullata o non riuscita.",
-    toastLoadVehiclesError: "Errore nel caricamento dei veicoli.",
-    toastFillOneField: "Compila almeno un dato del veicolo (marca, modello, allestimento, targa o VIN).",
-    toastDatesRequired: "Data immatricolazione e data di possesso sono obbligatorie.",
-    toastKmRequired: "Inserisci i km attuali (anche 0 è valido).",
-    toastTxSent: "Transazione inviata, in attesa di conferma…",
-    toastVehicleRegistered: "Veicolo registrato.",
-    toastTxFailed: "Firma annullata o transazione non riuscita.",
-    toastLoadHistoryError: "Errore nel caricamento dello storico interventi.",
-    statsTitle: "Statistiche",
-    statsTotalInterventions: "Interventi registrati",
-    statsTotalSpend: "Spesa totale",
-    statsAmountSpecifiedFor: "Importo indicato per {n} su {total}",
-    statsThisYearSpend: "Spesa quest'anno ({year})",
-    statsSpendByYear: "Spesa per anno",
-    statsSpendByCategory: "Spesa per categoria",
-    statsAvgCost: "Costo medio per intervento",
-    statsNoSpendData: "Nessun importo ancora registrato.",
-    statsNoCategoryData: "Nessuna categoria ancora registrata.",
-    toastDateRequired: "Indica la data dell'intervento.",
-    toastKmRequiredIntervention: "Indica i km al momento dell'intervento.",
-    toastDescRequired: "Aggiungi una descrizione dell'intervento.",
-    toastDescTooLong: "Descrizione troppo lunga (max {max} caratteri).",
-    toastInterventionRegistered: "Intervento registrato.",
-    defaultVehicleName: "Veicolo",
-    unnamedVehicle: "Veicolo senza nome",
-    localeCode: "it-IT"
-  }
-};
-
-function detectInitialLang(){
-  const saved = localStorage.getItem("mcb_lang");
-  if(saved === "it" || saved === "en") return saved;
-  return (navigator.language || "").toLowerCase().startsWith("it") ? "it" : "en";
-}
-
-const state = {
-  provider: null,
-  signer: null,
-  address: null,
-  chainId: null,
-  contract: null,
-  vehicles: [],
-  currentTokenId: null,
-  lang: detectInitialLang(),
-  canUploadPhoto: false,
-  membershipTier: 0,
-  canUseCategories: false,
-  canUploadDocument: false,
-};
-
-function t(key, vars){
-  let str = (I18N[state.lang] && I18N[state.lang][key]) || I18N.en[key] || key;
-  if(vars){
-    for(const k in vars){ str = str.replace(`{${k}}`, vars[k]); }
-  }
-  return str;
-}
-
-function localeCode(){
-  return I18N[state.lang].localeCode;
-}
-
-function $(id){ return document.getElementById(id); }
-
-function applyStaticTranslations(){
-  document.documentElement.lang = state.lang;
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    el.textContent = t(el.dataset.i18n);
-  });
-  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
-    el.placeholder = t(el.dataset.i18nPh);
-  });
-  $("btn-lang").textContent = state.lang === "it" ? "EN" : "IT";
-  $("i-desc-count").textContent = `${$("i-desc").value.length} / ${MAX_DESCRIPTION_LENGTH}`;
-  if(!state.address){
-    $("btn-connect").textContent = t("walletConnect");
-  }
-}
-
-function setLang(lang){
-  state.lang = lang;
-  localStorage.setItem("mcb_lang", lang);
-  applyStaticTranslations();
-  if(state.vehicles && state.vehicles.length) renderVehicleList();
-  if(state.currentTokenId){
-    loadInterventions(state.currentTokenId);
-    const v = state.vehicles.find(x => x.tokenId === state.currentTokenId);
-    if(v){
-      const attrsEl = $("detail-attrs");
-      attrsEl.innerHTML = "";
-      for(const a of v.attributes){
-        const pill = document.createElement("span");
-        pill.className = "attr-pill";
-        pill.textContent = `${translateAttributeKey(a.key)}: ${a.value}`;
-        attrsEl.appendChild(pill);
-      }
-    }
-  }
-}
-
-$("btn-lang").addEventListener("click", () => {
-  setLang(state.lang === "it" ? "en" : "it");
-});
-
-function showToast(message, variant=false){
-  const el = document.createElement("div");
-  let cls = "toast";
-  if(variant === true || variant === "error") cls += " error";
-  else if(variant === "success") cls += " success";
-  el.className = cls;
-  el.textContent = message;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), variant === "success" ? 5000 : 4000);
-}
-
-function dateToTimestamp(dateInputValue){
-  if(!dateInputValue) return 0;
-  return Math.floor(new Date(dateInputValue + "T00:00:00Z").getTime() / 1000);
-}
-
-function timestampToDateLabel(ts){
-  if(!ts || Number(ts) === 0) return "—";
-  const d = new Date(Number(ts) * 1000);
-  return d.toLocaleDateString(localeCode(), { day:"2-digit", month:"2-digit", year:"numeric" });
-}
-
-function timestampToStampParts(ts){
-  const d = new Date(Number(ts) * 1000);
-  return {
-    day: String(d.getUTCDate()).padStart(2,"0"),
-    month: d.toLocaleDateString(localeCode(), { month:"short" }).toUpperCase(),
-    year: d.getUTCFullYear()
-  };
-}
-
-function eurosToCents(value){
-  if(value === "" || value === null || value === undefined) return 0;
-  return Math.round(parseFloat(value) * 100);
-}
-
-function centsToEuroLabel(cents){
-  const n = Number(cents);
-  if(!n) return null;
-  return (n / 100).toLocaleString(localeCode(), { style:"currency", currency:"EUR" });
-}
-
-function navigate(view){
-  ["list","mint","detail","intervention"].forEach(v => {
-    $("view-" + v).hidden = (v !== view);
-  });
-  window.scrollTo(0,0);
-}
-
-document.querySelectorAll("[data-nav]").forEach(btn => {
-  btn.addEventListener("click", () => navigate(btn.dataset.nav));
-});
-
-async function connectWallet(){
-  const injected = window.lukso || window.ethereum;
-  if(!injected){
-    showToast(t("toastNoUp"), true);
-    return;
-  }
-
-  try{
-    state.provider = new ethers.BrowserProvider(injected);
-    await injected.request({ method: "eth_requestAccounts" });
-    state.signer = await state.provider.getSigner();
-    state.address = await state.signer.getAddress();
-    const network = await state.provider.getNetwork();
-    state.chainId = Number(network.chainId);
-
-    const netConfig = NETWORKS[state.chainId];
-    if(!netConfig){
-      showToast(t("toastNetworkUnsupported"), true);
-      return;
-    }
-    if(netConfig.contractAddress === "0x0000000000000000000000000000000000000000"){
-      showToast(t("toastNoContract"), true);
-      return;
-    }
-
-    state.contract = new ethers.Contract(netConfig.contractAddress, MYCARBOOK_ABI, state.signer);
-
-    $("btn-connect").textContent = state.address.slice(0,6) + "…" + state.address.slice(-4);
-    $("btn-connect").classList.add("connected");
-    $("list-not-connected").hidden = true;
-    $("btn-new-vehicle").hidden = false;
-
-    await checkMembershipAccess();
-    await loadVehicles();
-  }catch(err){
-    console.error(err);
-    showToast(t("toastConnectFailed"), true);
-  }
-}
-
-$("btn-connect").addEventListener("click", connectWallet);
-
-// Gate lato UI: solo indirizzi che Simone autorizza via
-// backend/allowed-addresses.json vedono il bottone di upload foto al mint.
-// Non è un confine di sicurezza (chiunque potrebbe scrivere metadata
-// direttamente dalla propria UP), è solo un rollout controllato della feature.
-// Legge il tier membership (0 = nessuna) e deriva i tre permessi
-// gerarchici: Bronze -> foto, Silver -> + categorie, Gold -> + documenti.
-// La lista manuale allowed-addresses.json resta valida SOLO per la foto
-// (comportamento storico), non sblocca categorie/documenti.
-async function checkMembershipAccess(){
-  let allowedByList = false;
-  let tier = 0;
-
-  try{
-    const res = await fetch(`/api/photo-access/${state.address}`);
-    const data = await res.json();
-    allowedByList = !!data.allowed;
-  }catch(err){
-    console.warn("Controllo lista autorizzati non riuscito, la considero negativa:", err);
-  }
-
-  try{
-    const membershipAddress = MEMBERSHIP_ADDRESSES[state.chainId];
-    if(membershipAddress && membershipAddress !== "0x0000000000000000000000000000000000000000"){
-      const membershipContract = new ethers.Contract(membershipAddress, MEMBERSHIP_ABI, state.provider);
-      tier = Number(await membershipContract.tierOf(state.address));
-    }
-  }catch(err){
-    console.warn("Controllo membership non riuscito, la considero negativa:", err);
-  }
-
-  state.membershipTier = tier;
-  state.canUploadPhoto = allowedByList || tier >= TIER_BRONZE;
-  state.canUseCategories = tier >= TIER_SILVER;
-  state.canUploadDocument = tier >= TIER_GOLD;
-
-  $("f-photo").disabled = !state.canUploadPhoto;
-  $("photo-locked-hint").hidden = state.canUploadPhoto;
-
-  document.querySelectorAll(".i-category").forEach(el => el.disabled = !state.canUseCategories);
-  $("category-locked-hint").hidden = state.canUseCategories;
-
-  $("f-document").disabled = !state.canUploadDocument;
-  $("document-locked-hint").hidden = state.canUploadDocument;
-}
-
-async function loadVehicles(){
-  try{
-    const tokenIds = await state.contract.tokenIdsOf(state.address);
-    state.vehicles = [];
-
-    for(const tokenId of tokenIds){
-      const info = await state.contract.getVehicleInfo(tokenId);
-      let meta = { name: t("defaultVehicleName"), attributes: [] };
-      try{
-        const metadataBytes = await state.contract.getDataForTokenId(tokenId, LSP4_METADATA_KEY);
-        meta = await decodeVehicleMetadata(metadataBytes);
-      }catch(e){
-        console.warn("Metadata non leggibile per", tokenId, e);
-      }
-
-      state.vehicles.push({
-        tokenId,
-        name: meta.name || t("unnamedVehicle"),
-        attributes: meta.attributes || [],
-        icon: meta.icon || null,
-        km: info.km,
-        regDate: info.registrationDate,
-        purchaseDate: info.purchaseDate,
-      });
-    }
-
-    renderVehicleList();
-  }catch(err){
-    console.error(err);
-    showToast(t("toastLoadVehiclesError"), true);
-  }
-}
-
-async function decodeVehicleMetadata(metadataBytes){
-  const schema = [{
-    name: "LSP4Metadata",
-    key: LSP4_METADATA_KEY,
-    keyType: "Singleton",
-    valueType: "bytes",
-    valueContent: "VerifiableURI"
-  }];
-
-  const decoded = ERC725.decodeData([{ keyName: "LSP4Metadata", value: metadataBytes }], schema);
-  const cidPath = decoded[0].value.url.replace("ipfs://", "");
-
-  const json = await fetchIpfsJsonWithFallback(cidPath);
-  const lsp4 = json.LSP4Metadata || {};
-  return {
-    name: lsp4.name,
-    attributes: lsp4.attributes || [],
-    icon: (lsp4.icon && lsp4.icon[0] && lsp4.icon[0].url) || null
-  };
-}
-
-async function fetchIpfsJsonWithFallback(cidPath){
-  const gateways = [
-    `https://ipfs.chainintegrate.it/ipfs/${cidPath}`,
-    `https://api.universalprofile.cloud/ipfs/${cidPath}`
-  ];
-
-  let lastError;
-  for(const url of gateways){
-    try{
-      const res = await fetch(url);
-      if(!res.ok) throw new Error(`Gateway ha risposto ${res.status}`);
-      return await res.json();
-    }catch(err){
-      console.warn("Gateway IPFS non disponibile, provo il successivo:", url, err);
-      lastError = err;
-    }
-  }
-  throw lastError;
-}
-
-function renderVehicleList(){
-  const container = $("vehicle-list");
-  container.innerHTML = "";
-
-  $("list-empty").hidden = state.vehicles.length !== 0;
-
-  for(const v of state.vehicles){
-    const card = document.createElement("div");
-    card.className = "vehicle-card";
-    const thumbContent = v.icon
-      ? `<img src="${resolveIpfsUrl(v.icon)}" alt="" onerror="this.onerror=null; this.src='${resolveIpfsUrl(v.icon, true)}';" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />`
-      : "🚗";
-    card.innerHTML = `
-      <div class="vehicle-thumb">${thumbContent}</div>
-      <div class="vehicle-card-body">
-        <div class="vehicle-card-name">${escapeHtml(v.name)}</div>
-        <div class="vehicle-card-meta">${Number(v.km).toLocaleString(localeCode())} km</div>
-      </div>
-    `;
-    card.addEventListener("click", () => openVehicleDetail(v.tokenId));
-    container.appendChild(card);
-  }
-}
-
-// Le attributes (Brand/Model/Trim/Plate/VIN) sono salvate on-chain in
-// inglese, sempre — solo la UI le traduce a video in base alla lingua
-// attiva. Chiavi non riconosciute (attributes future/custom) restano
-// mostrate così come sono salvate.
-function translateAttributeKey(key){
-  const map = {
-    Brand: "labelBrand",
-    Model: "labelModel",
-    Trim: "labelTrim",
-    Plate: "labelPlate",
-    VIN: "labelVin"
-  };
-  return map[key] ? t(map[key]) : key;
-}
-
-// Estrae un motivo leggibile da un errore ethers (revert del contratto,
-// gas insufficiente, rete, ecc.) — così l'utente vede il motivo reale nel
-// toast invece del solo messaggio generico, senza dover aprire la console.
-function extractErrorReason(err){
-  const raw = err?.reason || err?.shortMessage || err?.info?.error?.message || err?.message || "";
-  // Ripulisco i prefissi tecnici più comuni di ethers per lasciare solo
-  // la parte leggibile (es. il messaggio del require nel contratto).
-  return raw
-    .replace(/^execution reverted:?\s*/i, "")
-    .replace(/^Error:\s*/i, "")
-    .split("(")[0]
-    .trim()
-    .slice(0, 120); // non farlo diventare un romanzo nel toast
-}
-
-function escapeHtml(str){
-  const div = document.createElement("div");
-  div.textContent = str || "";
-  return div.innerHTML;
-}
-
-// Per le immagini basta puntare direttamente al gateway (niente fetch/parse
-// come per il JSON) — l'attributo onerror nell'<img> gestisce il fallback
-// al gateway pubblico se quello dedicato non risponde.
-function resolveIpfsUrl(ipfsUrl, usePublicGateway=false){
-  if(!ipfsUrl) return null;
-  const cidPath = ipfsUrl.replace("ipfs://", "");
-  return usePublicGateway
-    ? `https://api.universalprofile.cloud/ipfs/${cidPath}`
-    : `https://ipfs.chainintegrate.it/ipfs/${cidPath}`;
-}
-
-$("btn-new-vehicle").addEventListener("click", () => navigate("mint"));
-
-$("btn-mint-review").addEventListener("click", () => {
-  const name = $("f-name").value.trim();
-  const brand = $("f-brand").value.trim();
-  const model = $("f-model").value.trim();
-  const trim = $("f-trim").value.trim();
-  const plate = $("f-plate").value.trim();
-  const vin = $("f-vin").value.trim();
-  const regDate = $("f-reg-date").value;
-  const purchaseDate = $("f-purchase-date").value;
-  const km = $("f-km").value;
-
-  if(![brand, model, trim, plate, vin].some(v => v.length > 0)){
-    showToast(t("toastFillOneField"), true);
-    return;
-  }
-  if(!regDate || !purchaseDate){
-    showToast(t("toastDatesRequired"), true);
-    return;
-  }
-
-  const photoFile = $("f-photo").files[0];
-  if(photoFile && !$("i-photo-privacy-ack").checked){
-    showToast(t("toastPhotoAckRequired"), true);
-    return;
-  }
-  if(km === ""){
-    showToast(t("toastKmRequired"), true);
-    return;
-  }
-
-  const box = $("mint-confirm");
-  box.hidden = false;
-  box.innerHTML = `
-    <h3>${t("confirmTitle")}</h3>
-    <div class="confirm-row"><span class="k">${t("rowName")}</span><span>${escapeHtml(name || "—")}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowBrandModel")}</span><span>${escapeHtml(brand)} ${escapeHtml(model)}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowTrim")}</span><span>${escapeHtml(trim || "—")}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowPlate")}</span><span>${escapeHtml(plate || "—")}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowVin")}</span><span>${escapeHtml(vin || "—")}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowRegDate")}</span><span>${regDate}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowPurchaseDate")}</span><span>${purchaseDate}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowKm")}</span><span>${Number(km).toLocaleString(localeCode())}</span></div>
-  `;
-
-  const confirmBtn = document.createElement("button");
-  confirmBtn.className = "btn btn-primary";
-  confirmBtn.style.marginTop = "0.75rem";
-  confirmBtn.textContent = t("confirmSignBtn");
-  confirmBtn.addEventListener("click", (e) => submitMint({ name, brand, model, trim, plate, vin, regDate, purchaseDate, km }, e.currentTarget));
-  box.appendChild(confirmBtn);
-
-  box.scrollIntoView({ behavior: "smooth" });
-});
-
-async function submitMint(data, confirmBtn){
-  const originalBtnText = confirmBtn ? confirmBtn.textContent : null;
-  if(confirmBtn){
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = t("toastTxSent");
-  }
-
-  try{
-    const attributes = [];
-    if(data.brand) attributes.push({ key:"Brand", value:data.brand, type:"string" });
-    if(data.model) attributes.push({ key:"Model", value:data.model, type:"string" });
-    if(data.trim) attributes.push({ key:"Trim", value:data.trim, type:"string" });
-    if(data.plate) attributes.push({ key:"Plate", value:data.plate, type:"string" });
-    if(data.vin) attributes.push({ key:"VIN", value:data.vin, type:"string" });
-
-    const photo = await uploadVehiclePhotoIfProvided();
-
-    const metadataJson = {
-      LSP4Metadata: {
-        name: data.name || `${data.brand} ${data.model}`.trim() || t("defaultVehicleName"),
-        description: "On-chain maintenance logbook — MyCarBook.",
-        links: [],
-        icon: photo ? [photo] : [],
-        images: photo ? [[photo]] : [],
-        assets: [],
-        attributes
-      }
-    };
-
-    const { cid } = await uploadJsonToIpfs(metadataJson);
-
-    const schema = [{
-      name: "LSP4Metadata",
-      key: LSP4_METADATA_KEY,
-      keyType: "Singleton",
-      valueType: "bytes",
-      valueContent: "VerifiableURI"
-    }];
-    const encoded = ERC725.encodeData([{
-      keyName: "LSP4Metadata",
-      value: { json: metadataJson, url: `ipfs://${cid}` }
-    }], schema);
-
-    const tx = await state.contract.mintVehicle(
-      dateToTimestamp(data.regDate),
-      dateToTimestamp(data.purchaseDate),
-      BigInt(data.km),
-      encoded.values[0]
-    );
-    showToast(t("toastTxSent"));
-    await tx.wait();
-    showToast("✓ " + t("toastVehicleRegistered"), "success");
-
-    clearMintForm();
-    await loadVehicles();
-    navigate("list");
-  }catch(err){
-    console.error(err);
-    const reason = extractErrorReason(err);
-    showToast(reason ? `${t("toastTxFailed")} (${reason})` : t("toastTxFailed"), true);
-    if(confirmBtn){
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = originalBtnText;
-    }
-  }
-}
-
-// Carica la foto su Pinata se l'utente ne ha selezionata una (bottone visibile
-// solo se autorizzato). Se l'upload fallisce, avvisa ma NON blocca il mint —
-// meglio un veicolo senza foto che un mint perso per un problema di rete.
-// Firma un messaggio con la UP connessa per autorizzare un upload gated
-// (foto/documento/admin) — il backend verifica questa firma via ERC-1271
-// prima di autorizzare il pin, non si fida più del solo bottone disabilitato
-// lato UI (che resta comunque, solo per comodità/UX).
-async function signUploadAuth(purpose){
-  const timestamp = Date.now();
-  const message = `MyCarBook upload authorization\npurpose: ${purpose}\naddress: ${state.address}\nchainId: ${state.chainId}\ntimestamp: ${timestamp}`;
-  const signature = await state.signer.signMessage(message);
-  return { address: state.address, signature, chainId: state.chainId, purpose, timestamp };
-}
-
-async function uploadVehiclePhotoIfProvided(){
-  const fileInput = $("f-photo");
-  if(!state.canUploadPhoto || !fileInput.files || fileInput.files.length === 0) return null;
-
-  const file = fileInput.files[0];
-  if(file.size > 5 * 1024 * 1024){
-    showToast(t("toastPhotoTooBig"), true);
-    return null;
-  }
-
-  try{
-    const buffer = await file.arrayBuffer();
-    const hash = ethers.keccak256(new Uint8Array(buffer));
-    const bitmap = await createImageBitmap(file);
-    const auth = await signUploadAuth("photo");
-
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("address", auth.address);
-    formData.append("signature", auth.signature);
-    formData.append("chainId", auth.chainId);
-    formData.append("purpose", auth.purpose);
-    formData.append("timestamp", auth.timestamp);
-    const res = await fetch("/api/pin-file", { method: "POST", body: formData });
-    if(!res.ok) throw new Error("upload immagine fallito");
-    const data = await res.json();
-
-    return {
-      width: bitmap.width,
-      height: bitmap.height,
-      url: `ipfs://${data.cid}`,
-      verification: { method: "keccak256(bytes)", data: hash }
-    };
-  }catch(err){
-    console.warn("Upload foto non riuscito:", err);
-    showToast(t("toastPhotoUploadFailed"), true);
-    return null;
-  }
-}
-
-// Documento allegato all'intervento (fattura, ecc.) — SOLO comodità, niente
-// hash/certificazione (deciso: "non ha senso, troppo certificato"). Nessun
-// campo dedicato nel contratto: il link viene agganciato in coda alla
-// description con un marcatore che la UI riconosce in lettura.
-async function uploadDocumentIfProvided(){
-  const fileInput = $("f-document");
-  if(!state.canUploadDocument || !fileInput.files || fileInput.files.length === 0) return null;
-
-  const file = fileInput.files[0];
-  if(file.size > 5 * 1024 * 1024){
-    showToast(t("toastPhotoTooBig"), true);
-    return null;
-  }
-
-  try{
-    const auth = await signUploadAuth("document");
-
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("address", auth.address);
-    formData.append("signature", auth.signature);
-    formData.append("chainId", auth.chainId);
-    formData.append("purpose", auth.purpose);
-    formData.append("timestamp", auth.timestamp);
-    const res = await fetch("/api/pin-file", { method: "POST", body: formData });
-    if(!res.ok) throw new Error("upload documento fallito");
-    const data = await res.json();
-    return `ipfs://${data.cid}`;
-  }catch(err){
-    console.warn("Upload documento non riuscito:", err);
-    showToast(t("toastPhotoUploadFailed"), true);
-    return null;
-  }
-}
-
-function clearMintForm(){
-  ["f-name","f-brand","f-model","f-trim","f-plate","f-vin","f-reg-date","f-purchase-date","f-km"]
-    .forEach(id => $(id).value = "");
-  $("f-photo").value = "";
-  $("i-photo-privacy-ack").checked = false;
-  $("mint-confirm").hidden = true;
-}
-
-async function uploadJsonToIpfs(json){
-  const res = await fetch("/api/pin-json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(json)
-  });
-  if(!res.ok){
-    const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody.error || "IPFS pin error.");
-  }
-  const data = await res.json();
-  return { cid: data.cid };
-}
-
-async function openVehicleDetail(tokenId){
-  state.currentTokenId = tokenId;
-  const v = state.vehicles.find(x => x.tokenId === tokenId);
-  if(!v) return;
-
-  $("detail-name").textContent = v.name;
-  $("detail-km").textContent = Number(v.km).toLocaleString(localeCode());
-
-  const photoEl = $("detail-photo");
-  if(v.icon){
-    photoEl.src = resolveIpfsUrl(v.icon);
-    photoEl.onerror = () => { photoEl.onerror = null; photoEl.src = resolveIpfsUrl(v.icon, true); };
-    photoEl.hidden = false;
-  }else{
-    photoEl.hidden = true;
-    photoEl.src = "";
-  }
-
-  const attrsEl = $("detail-attrs");
-  attrsEl.innerHTML = "";
-  for(const a of v.attributes){
-    const pill = document.createElement("span");
-    pill.className = "attr-pill";
-    pill.textContent = `${translateAttributeKey(a.key)}: ${a.value}`;
-    attrsEl.appendChild(pill);
-  }
-
-  navigate("detail");
-  await loadInterventions(tokenId);
-}
-
-// Calcola e mostra un piccolo pannello statistiche a partire dagli stessi
-// eventi già letti per la timeline — nessuna chiamata extra alla chain.
-// Nota: un intervento con più categorie insieme (bitmask) viene contato
-// per intero in OGNUNA delle categorie che lo compongono — la somma delle
-// "spese per categoria" può quindi superare la spesa totale, di proposito
-// (un incidente carrozzeria+meccanica è un costo reale in entrambe le viste).
-function renderStats(events){
-  const container = $("vehicle-stats");
-  if(events.length === 0){
-    container.innerHTML = "";
-    return;
-  }
-
-  const categoryLabels = {1:t("catMechanical"),2:t("catBodywork"),4:t("catTires"),8:t("catElectrical"),16:t("catCleaning"),32:t("catOther")};
-  const currentYear = new Date().getFullYear();
-
-  let totalSpendCents = 0;
-  let countWithAmount = 0;
-  const spendByYear = {};
-  const spendByCategory = {};
-
-  for(const ev of events){
-    const cents = Number(ev.amountCents);
-    const year = new Date(Number(ev.date) * 1000).getUTCFullYear();
-
-    if(cents > 0){
-      totalSpendCents += cents;
-      countWithAmount++;
-      spendByYear[year] = (spendByYear[year] || 0) + cents;
-    }
-
-    const flags = Number(ev.categoryFlags) || 0;
-    for(const flag of Object.keys(categoryLabels)){
-      if(flags & Number(flag)){
-        spendByCategory[flag] = (spendByCategory[flag] || 0) + cents;
-      }
-    }
-  }
-
-  const thisYearSpendCents = spendByYear[currentYear] || 0;
-  const avgCents = countWithAmount > 0 ? Math.round(totalSpendCents / countWithAmount) : 0;
-
-  const yearsSorted = Object.keys(spendByYear).sort((a,b) => b - a);
-  const yearRows = yearsSorted.length
-    ? yearsSorted.map(y => `
-        <div class="stats-row">
-          <span class="stats-k">${y}</span>
-          <span class="stats-v">${centsToEuroLabel(spendByYear[y])}</span>
-        </div>
-      `).join("")
-    : `<p class="stats-empty">${t("statsNoSpendData")}</p>`;
-
-  const categoriesWithSpend = Object.keys(spendByCategory).filter(f => spendByCategory[f] > 0);
-  const categoryRows = categoriesWithSpend.length
-    ? categoriesWithSpend
-        .sort((a,b) => spendByCategory[b] - spendByCategory[a])
-        .map(f => `
-          <div class="stats-row">
-            <span class="stats-k">${categoryLabels[f]}</span>
-            <span class="stats-v">${centsToEuroLabel(spendByCategory[f])}</span>
-          </div>
-        `).join("")
-    : `<p class="stats-empty">${t("statsNoCategoryData")}</p>`;
-
-  container.innerHTML = `
-    <div class="stats-card">
-      <h3>${t("statsTitle")}</h3>
-
-      <div class="stats-section">
-        <div class="stats-row">
-          <span class="stats-k">${t("statsTotalInterventions")}</span>
-          <span class="stats-v">${events.length}</span>
-        </div>
-        <div class="stats-row">
-          <span class="stats-k">${t("statsTotalSpend")}</span>
-          <span class="stats-v highlight">${totalSpendCents > 0 ? centsToEuroLabel(totalSpendCents) : "—"}</span>
-        </div>
-        <div class="stats-row">
-          <span class="stats-k">${t("statsThisYearSpend", { year: currentYear })}</span>
-          <span class="stats-v">${thisYearSpendCents > 0 ? centsToEuroLabel(thisYearSpendCents) : "—"}</span>
-        </div>
-        <div class="stats-row">
-          <span class="stats-k">${t("statsAvgCost")}</span>
-          <span class="stats-v">${avgCents > 0 ? centsToEuroLabel(avgCents) : "—"}</span>
-        </div>
-        ${countWithAmount < events.length ? `<p class="stats-empty">${t("statsAmountSpecifiedFor", { n: countWithAmount, total: events.length })}</p>` : ""}
-      </div>
-
-      <div class="stats-section">
-        <div class="stats-section-label">${t("statsSpendByYear")}</div>
-        ${yearRows}
-      </div>
-
-      <div class="stats-section">
-        <div class="stats-section-label">${t("statsSpendByCategory")}</div>
-        ${categoryRows}
-      </div>
-    </div>
-  `;
-}
-
-// eth_getLogs sull'RPC pubblico LUKSO rifiuta intervalli oltre 10.000
-// blocchi in una sola richiesta. Paginiamo a blocchi di 9.000 (margine di
-// sicurezza) partendo dal blocco di deploy del contratto invece che da 0,
-// per ridurre il numero di richieste necessarie man mano che la chain
-// avanza nel tempo.
-const MAX_BLOCK_RANGE = 9000;
-
-async function queryFilterPaginated(contract, filter, fromBlock){
-  const provider = contract.runner.provider;
-  const latestBlock = await provider.getBlockNumber();
-  const allEvents = [];
-
-  let start = fromBlock;
-  while(start <= latestBlock){
-    const end = Math.min(start + MAX_BLOCK_RANGE - 1, latestBlock);
-
-    // Retry con backoff: alcuni nodi RPC pubblici (specie su testnet)
-    // possono rifiutare temporaneamente una richiesta su un range storico
-    // specifico (es. "Receipt not available") — spesso legato a QUALE
-    // nodo dietro il load balancer risponde, non a un problema permanente.
-    let chunk;
-    let lastErr;
-    for(let attempt = 0; attempt < 3; attempt++){
-      try{
-        chunk = await contract.queryFilter(filter, start, end);
-        lastErr = null;
-        break;
-      }catch(err){
-        lastErr = err;
-        await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
-      }
-    }
-    if(lastErr) throw lastErr;
-
-    allEvents.push(...chunk);
-    start = end + 1;
-  }
-
-  return allEvents;
-}
-
-async function loadInterventions(tokenId){
-  const timeline = $("intervention-timeline");
-  timeline.innerHTML = "";
-
-  try{
-    const filter = state.contract.filters.InterventionLogged(tokenId);
-    const deploymentBlock = NETWORKS[state.chainId]?.deploymentBlock || 0;
-    const events = await queryFilterPaginated(state.contract, filter, deploymentBlock);
-
-    const sorted = events
-      .map(e => e.args)
-      .sort((a,b) => Number(b.date) - Number(a.date));
-
-    $("timeline-empty").hidden = sorted.length !== 0;
-    renderStats(sorted);
-
-    for(const ev of sorted){
-      const stamp = timestampToStampParts(ev.date);
-      const amountLabel = centsToEuroLabel(ev.amountCents);
-
-      // Il link al documento (se presente) è agganciato in coda alla
-      // description con un marcatore [doc:ipfs://...] — lo separiamo qui
-      // per mostrarlo come link invece che come testo grezzo.
-      const docMatch = ev.description.match(/\s*\[doc:(ipfs:\/\/[^\]]+)\]\s*$/);
-      const cleanDesc = docMatch ? ev.description.slice(0, docMatch.index) : ev.description;
-      const docLink = docMatch
-        ? `<a href="${resolveIpfsUrl(docMatch[1])}" target="_blank" rel="noopener" style="color:var(--brass);">📎 ${t("viewDocument")}</a>`
-        : "";
-
-      const categoryLabels = {1:t("catMechanical"),2:t("catBodywork"),4:t("catTires"),8:t("catElectrical"),16:t("catCleaning"),32:t("catOther")};
-      const categoryTags = Object.keys(categoryLabels)
-        .filter(v => Number(ev.categoryFlags) & Number(v))
-        .map(v => `<span class="attr-pill">${categoryLabels[v]}</span>`)
-        .join("");
-
-      const entry = document.createElement("div");
-      entry.className = "stamp-entry";
-      entry.innerHTML = `
-        <div class="stamp-badge">
-          <div class="d">${stamp.day}<br/>${stamp.month} '${String(stamp.year).slice(-2)}</div>
-        </div>
-        <div class="stamp-card">
-          <div class="desc">${escapeHtml(cleanDesc)}</div>
-          ${categoryTags ? `<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">${categoryTags}</div>` : ""}
-          <div class="meta">
-            <span>${Number(ev.km).toLocaleString(localeCode())} km</span>
-            ${amountLabel ? `<span>${amountLabel}</span>` : ""}
-            ${docLink}
-          </div>
-        </div>
-      `;
-      timeline.appendChild(entry);
-    }
-  }catch(err){
-    console.error(err);
-    showToast(t("toastLoadHistoryError"), true);
-  }
-}
-
-$("btn-new-intervention").addEventListener("click", () => {
-  navigate("intervention");
-});
-
-$("i-desc").addEventListener("input", () => {
-  $("i-desc-count").textContent = `${$("i-desc").value.length} / ${MAX_DESCRIPTION_LENGTH}`;
-});
-
-$("btn-intervention-review").addEventListener("click", () => {
-  const date = $("i-date").value;
-  const km = $("i-km").value;
-  const amount = $("i-amount").value;
-  const desc = $("i-desc").value.trim();
-
-  if(!date){
-    showToast(t("toastDateRequired"), true);
-    return;
-  }
-  if(km === ""){
-    showToast(t("toastKmRequiredIntervention"), true);
-    return;
-  }
-  if(desc.length === 0){
-    showToast(t("toastDescRequired"), true);
-    return;
-  }
-  if(desc.length > MAX_DESCRIPTION_LENGTH){
-    showToast(t("toastDescTooLong", { max: MAX_DESCRIPTION_LENGTH }), true);
-    return;
-  }
-
-  const documentFileToCheck = $("f-document").files[0];
-  if(documentFileToCheck && !$("i-document-privacy-ack").checked){
-    showToast(t("toastDocumentAckRequired"), true);
-    return;
-  }
-
-  const categoryFlags = state.canUseCategories
-    ? Array.from(document.querySelectorAll(".i-category:checked")).reduce((sum, el) => sum + Number(el.value), 0)
-    : 0;
-  const categoryLabels = {1:t("catMechanical"),2:t("catBodywork"),4:t("catTires"),8:t("catElectrical"),16:t("catCleaning"),32:t("catOther")};
-  const selectedCategoryNames = Object.keys(categoryLabels)
-    .filter(v => categoryFlags & Number(v))
-    .map(v => categoryLabels[v]);
-
-  const documentFile = $("f-document").files[0];
-
-  const box = $("intervention-confirm");
-  box.hidden = false;
-  box.innerHTML = `
-    <h3>${t("confirmTitle")}</h3>
-    <div class="confirm-row"><span class="k">${t("rowDate")}</span><span>${date}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowKmIntervention")}</span><span>${Number(km).toLocaleString(localeCode())}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowAmount")}</span><span>${amount ? centsToEuroLabel(eurosToCents(amount)) : t("amountNotSpecified")}</span></div>
-    <div class="confirm-row"><span class="k">${t("rowDesc")}</span><span>${escapeHtml(desc)}</span></div>
-    ${selectedCategoryNames.length ? `<div class="confirm-row"><span class="k">${t("rowCategories")}</span><span>${selectedCategoryNames.join(", ")}</span></div>` : ""}
-    ${documentFile ? `<div class="confirm-row"><span class="k">${t("rowDocument")}</span><span>${escapeHtml(documentFile.name)}</span></div>` : ""}
-  `;
-
-  const confirmBtn = document.createElement("button");
-  confirmBtn.className = "btn btn-primary";
-  confirmBtn.style.marginTop = "0.75rem";
-  confirmBtn.textContent = t("confirmSignBtn");
-  confirmBtn.addEventListener("click", (e) => submitIntervention({ date, km, amount, desc, categoryFlags }, e.currentTarget));
-  box.appendChild(confirmBtn);
-
-  box.scrollIntoView({ behavior:"smooth" });
-});
-
-async function submitIntervention(data, confirmBtn){
-  const originalBtnText = confirmBtn ? confirmBtn.textContent : null;
-  if(confirmBtn){
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = t("toastTxSent");
-  }
-
-  try{
-    const documentUri = await uploadDocumentIfProvided();
-    let finalDesc = data.desc;
-    if(documentUri){
-      const marker = ` [doc:${documentUri}]`;
-      if((finalDesc + marker).length > MAX_DESCRIPTION_LENGTH){
-        showToast(t("toastDescTooLongWithDoc"), true);
-        if(confirmBtn){ confirmBtn.disabled = false; confirmBtn.textContent = originalBtnText; }
-        return;
-      }
-      finalDesc = finalDesc + marker;
-    }
-
-    const tx = await state.contract.logIntervention(
-      state.currentTokenId,
-      dateToTimestamp(data.date),
-      BigInt(data.km),
-      Number(data.categoryFlags) || 0,
-      BigInt(eurosToCents(data.amount)),
-      finalDesc
-    );
-    showToast(t("toastTxSent"));
-    await tx.wait();
-    showToast("✓ " + t("toastInterventionRegistered"), "success");
-
-    clearInterventionForm();
-    navigate("detail");
-    await loadInterventions(state.currentTokenId);
-
-    const v = state.vehicles.find(x => x.tokenId === state.currentTokenId);
-    if(v && Number(data.km) > Number(v.km)){
-      v.km = data.km;
-      $("detail-km").textContent = Number(v.km).toLocaleString(localeCode());
-    }
-  }catch(err){
-    console.error(err);
-    const reason = extractErrorReason(err);
-    showToast(reason ? `${t("toastTxFailed")} (${reason})` : t("toastTxFailed"), true);
-    if(confirmBtn){
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = originalBtnText;
-    }
-  }
-}
-
-function clearInterventionForm(){
-  ["i-date","i-km","i-amount","i-desc"].forEach(id => $(id).value = "");
-  document.querySelectorAll(".i-category").forEach(el => el.checked = false);
-  $("f-document").value = "";
-  $("i-document-privacy-ack").checked = false;
-  $("i-desc-count").textContent = `0 / ${MAX_DESCRIPTION_LENGTH}`;
-  $("intervention-confirm").hidden = true;
-}
-
-applyStaticTranslations();
-navigate("list");
-</script>
+<footer class="site-footer">
+  <a href="how-it-works.html#privacy" data-i18n="footerPrivacy">Data and privacy</a>
+</footer>
+
+<script type="module" src="js/app.js"></script>
 
 </body>
 </html>
